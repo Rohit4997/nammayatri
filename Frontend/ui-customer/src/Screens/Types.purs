@@ -1866,3 +1866,7 @@ data IssueModalType = HELP_AND_SUPPORT_SCREEN_MODAL | REPORTED_ISSUES_MODAL | RE
 
 derive instance genericIssueModalType :: Generic IssueModalType _
 instance eqIssueModalType :: Eq IssueModalType where eq = genericEq
+
+data SearchLocationEditTextFocusType = SOURCE | DESTINATION
+derive instance genericSearchLocationEditTextFocus :: Generic SearchLocationEditTextFocusType _
+instance eqSearchLocationEditTextFocus :: Eq SearchLocationEditTextFocusType where eq = genericEq

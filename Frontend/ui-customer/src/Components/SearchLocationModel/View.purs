@@ -45,7 +45,7 @@ import Prelude (Unit, bind, const, map, pure, unit, ($), (&&), (+), (-), (/), (/
 import PrestoDOM (Accessiblity(..), Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Visibility(..), accessibility, accessibilityHint, adjustViewWithKeyboard, afterRender, alignParentBottom, alpha, autoCorrectionType, background, clickable, color, cornerRadius, cursorColor, disableClickFeedback, editText, ellipsize, fontStyle, frameLayout, gravity, height, hint, hintColor, id, imageUrl, imageView, imageWithFallback, inputTypeI, layoutGravity, lineHeight, linearLayout, lottieAnimationView, margin, onBackPressed, onChange, onClick, onFocus, orientation, padding, relativeLayout, scrollBarY, scrollView, selectAllOnFocus, singleLine, stroke, text, textSize, textView, visibility, weight, width)
 import PrestoDOM.Animation as PrestoAnim
 import Resources.Constants (getDelayForAutoComplete)
-import Screens.Types (SearchLocationModelType(..), LocationListItemState)
+import Screens.Types (SearchLocationModelType(..), LocationListItemState, SearchLocationEditTextFocusType(..))
 import Storage (KeyStore(..), getValueToLocalStore)
 import Styles.Colors as Color
 import Mobility.Prelude (boolToVisibility)
@@ -275,7 +275,7 @@ sourceDestinationEditTextView state push =
                 )
                 SourceChanged
             , inputTypeI if state.isSearchLocation == LocateOnMap then 0 else 1
-            , onFocus push $ const $ EditTextFocusChanged "S"
+            , onFocus push $ EditTextFocusChanged SOURCE
               , selectAllOnFocus true
             , autoCorrectionType 1
             ] <> FontStyle.subHeading1 LanguageStyle
@@ -346,7 +346,7 @@ sourceDestinationEditTextView state push =
                   )
                   DestinationChanged
               , inputTypeI if state.isSearchLocation == LocateOnMap then 0 else 1
-              , onFocus push $ const $ EditTextFocusChanged "D"
+              , onFocus push $ EditTextFocusChanged DESTINATION
               , selectAllOnFocus true
               , autoCorrectionType 1
               ]

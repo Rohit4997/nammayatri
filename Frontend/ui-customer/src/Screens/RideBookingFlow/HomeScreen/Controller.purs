@@ -67,7 +67,7 @@ import Effect (Effect)
 import Effect.Aff (launchAff)
 import Effect.Unsafe (unsafePerformEffect)
 import Effect.Uncurried (runEffectFn1)
-import Engineering.Helpers.Commons (flowRunner, getNewIDWithTag, os, getExpiryTime, convertUTCtoISC, getCurrentUTC, isPreviousVersion, safeMarginBottom, getDeviceHeight, screenHeight)
+import Engineering.Helpers.Commons (flowRunner, getNewIDWithTag, os, getExpiryTime, convertUTCtoISC, getCurrentUTC, isPreviousVersion, safeMarginBottom, getDeviceHeight, screenHeight, isTrue)
 import Engineering.Helpers.LogEvent (logEvent, logEventWithTwoParams, logEventWithMultipleParams)
 import Engineering.Helpers.Suggestions (getMessageFromKey, getSuggestionsfromKey)
 import Foreign (unsafeToForeign)
@@ -91,7 +91,7 @@ import Screens.HomeScreen.ScreenData (dummyAddress, dummyQuoteAPIEntity, dummyZo
 import Screens.HomeScreen.ScreenData as HomeScreenData
 import Screens.HomeScreen.Transformer (dummyRideAPIEntity, getDriverInfo, getEstimateList, getQuoteList, getSpecialZoneQuotes, transformContactList, getNearByDrivers, getEstimatesInfo, dummyEstimateEntity)
 import Screens.SuccessScreen.Handler as UI
-import Screens.Types (CallType(..), CardType(..), CurrentLocationDetails, CurrentLocationDetailsWithDistance(..), HomeScreenState, Location, LocationItemType(..), LocationListItemState, PopupType(..), RatingCard, SearchLocationModelType(..), SearchResultType(..), SheetState(..), SpecialTags, Stage(..), TipViewStage(..), ZoneType(..), Trip)
+import Screens.Types (CallType(..), CardType(..), CurrentLocationDetails, CurrentLocationDetailsWithDistance(..), HomeScreenState, Location, LocationItemType(..), LocationListItemState, PopupType(..), RatingCard, SearchLocationModelType(..), SearchResultType(..), SheetState(..), SpecialTags, Stage(..), TipViewStage(..), ZoneType(..), Trip, SearchLocationEditTextFocusType(..))
 import Services.API (EstimateAPIEntity(..), FareRange, GetDriverLocationResp, GetQuotesRes(..), GetRouteResp, LatLong(..), OfferRes, PlaceName(..), QuoteAPIEntity(..), RideBookingRes(..), SelectListRes(..), SelectedQuotes(..), RideBookingAPIDetails(..), GetPlaceNameResp(..), RideBookingListRes(..))
 import Services.Backend as Remote
 import Services.Config (getDriverNumber, getSupportNumber)
@@ -1850,12 +1850,14 @@ eval (SearchLocationModelActionController (SearchLocationModelController.Destina
           pure NoAction
       ]
 
-eval (SearchLocationModelActionController (SearchLocationModelController.EditTextFocusChanged textType)) state = do
-  _ <- pure $ spy "searchLocationModal" textType
-  if textType == "D" then
-    continue state { props { isSource = Just false, searchLocationModelProps{crossBtnDestVisibility = (STR.length state.data.destination) > 2}}, data {source = if state.data.source == "" then state.data.searchLocationModelData.prevLocation else state.data.source, locationList = if state.props.isSource == Just false then state.data.locationList else state.data.destinationSuggestions } }
+eval (SearchLocationModelActionController (SearchLocationModelController.EditTextFocusChanged textFocusedOn hasFocus)) state = do
+  if isTrue hasFocus then
+    if textFocusedOn == DESTINATION then
+      continue state { props { isSource = Just false, searchLocationModelProps{crossBtnDestVisibility = (STR.length state.data.destination) > 2}}, data {source = if state.data.source == "" then state.data.searchLocationModelData.prevLocation else state.data.source, locationList = if state.props.isSource == Just false then state.data.locationList else state.data.destinationSuggestions } }
+    else
+      continue state { props { isSource = Just true, searchLocationModelProps{crossBtnSrcVisibility = (STR.length state.data.source) > 2}} , data{ locationList = if state.props.isSource == Just true then state.data.locationList else state.data.recentSearchs.predictionArray } }
   else
-    continue state { props { isSource = Just true, searchLocationModelProps{crossBtnSrcVisibility = (STR.length state.data.source) > 2}} , data{ locationList = if state.props.isSource == Just true then state.data.locationList else state.data.recentSearchs.predictionArray } }
+    continue state
 
 eval (SearchLocationModelActionController (SearchLocationModelController.NoAction)) state = continue state
 
