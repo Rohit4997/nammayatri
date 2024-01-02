@@ -20,7 +20,6 @@ import qualified Data.Time as Time
 import qualified Database.Beam as B
 import qualified Domain.Types.ServerName as Domain
 import Kernel.Beam.Lib.UtilsTH
-import Kernel.External.Encryption (DbHash)
 import Kernel.Prelude
 import Kernel.Types.Beckn.City (City)
 
@@ -34,9 +33,7 @@ data MerchantT f = MerchantT
     companyName :: B.C f (Maybe Text),
     domain :: B.C f (Maybe Text),
     website :: B.C f (Maybe Text),
-    emailEncrypted :: B.C f (Maybe Text),
-    emailHash :: B.C f (Maybe DbHash),
-    passwordHash :: B.C f (Maybe DbHash),
+    authToken :: B.C f (Maybe Text),
     createdAt :: B.C f Time.UTCTime
   }
   deriving (Generic, B.Beamable)

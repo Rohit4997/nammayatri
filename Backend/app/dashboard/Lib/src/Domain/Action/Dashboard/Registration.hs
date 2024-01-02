@@ -181,7 +181,7 @@ generateLoginRes ::
   City.City ->
   m LoginRes
 generateLoginRes person merchant otp city = do
-  _merchantAccess <- QAccess.findByPersonIdAndMerchantIdAndCity person.id merchant.id city >>= fromMaybeM AccessDenied --FIXME cleanup tokens for this merchantId
+  _merchantAccess <- QAccess.findByPersonIdAndMerchantIdAndCity person.id merchant.id city >>= fromMaybeM AccessDenied --F
   (isToken, msg) <- check2FA _merchantAccess merchant otp
   token <-
     if isToken
@@ -307,7 +307,7 @@ registerFleetOwner req = do
   runRequestValidation validateFleetOwner req
   unlessM (isNothing <$> QP.findByMobileNumber req.mobileNumber req.mobileCountryCode) $ throwError (InvalidRequest "Phone already registered")
   fleetOwnerRole <- QRole.findByDashboardAccessType (getFleetRole req.fleetType) >>= fromMaybeM (RoleDoesNotExist "FLEET_OWNER")
-  fleetOwner <- buildFleetOwner req fleetOwnerRole.id
+  fleetOwner <- buildFleetOwner req fleetOwnerRole.id fleetOwnerRole.dashboardAccessType
   merchant <-
     QMerchant.findByShortId req.merchantId
       >>= fromMaybeM (MerchantDoesNotExist req.merchantId.getShortId)
@@ -323,8 +323,8 @@ registerFleetOwner req = do
       Just NORMAL_FLEET -> FLEET_OWNER
       Nothing -> FLEET_OWNER
 
-buildFleetOwner :: (EncFlow m r) => FleetRegisterReq -> Id DRole.Role -> m PT.Person
-buildFleetOwner req roleId = do
+buildFleetOwner :: (EncFlow m r) => FleetRegisterReq -> Id DRole.Role -> DRole.DashboardAccessType -> m PT.Person
+buildFleetOwner req roleId dashboardAccessType = do
   pid <- generateGUID
   now <- getCurrentTime
   mobileNumber <- encrypt req.mobileNumber
@@ -338,6 +338,7 @@ buildFleetOwner req roleId = do
         mobileNumber = mobileNumber,
         mobileCountryCode = req.mobileCountryCode,
         passwordHash = Nothing,
+        dashboardAccessType = Just dashboardAccessType,
         createdAt = now,
         updatedAt = now
       }

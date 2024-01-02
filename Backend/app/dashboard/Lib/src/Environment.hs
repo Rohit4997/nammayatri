@@ -34,7 +34,7 @@ import Kernel.Utils.Servant.Client
 import Kernel.Utils.Shutdown
 import System.Environment (lookupEnv)
 import Tools.Metrics
-import Tools.Streaming.Kafka
+import Tools.Streaming.Kafka.Environment
 
 data AppCfg = AppCfg
   { esqDBCfg :: EsqDBConfig,
@@ -67,8 +67,8 @@ data AppCfg = AppCfg
     slackChannel :: Text,
     internalEndPointMap :: M.Map BaseUrl BaseUrl,
     cacheConfig :: CacheConfig,
-    kafkaProducerCfg :: KafkaProducerCfg,
-    kvConfigUpdateFrequency :: Int
+    kvConfigUpdateFrequency :: Int,
+    kafkaProducerCfg :: KafkaProducerCfg
   }
   deriving (Generic, FromDhall)
 
@@ -105,7 +105,9 @@ data AppEnv = AppEnv
     slackEnv :: SlackEnv,
     internalEndPointHashMap :: HM.HashMap BaseUrl BaseUrl,
     cacheConfig :: CacheConfig,
+    kvConfigUpdateFrequency :: Int,
     kafkaProducerTools :: KafkaProducerTools,
+    kafkaProducerCfg :: KafkaProducerCfg,
     requestId :: Maybe Text,
     shouldLogRequestId :: Bool,
     kafkaProducerForART :: Maybe KafkaProducerTools
@@ -119,9 +121,9 @@ buildAppEnv authTokenCacheKeyPrefix AppCfg {..} = do
   loggerEnv <- prepareLoggerEnv loggerConfig podName
   esqDBEnv <- prepareEsqDBEnv esqDBCfg loggerEnv
   esqDBReplicaEnv <- prepareEsqDBEnv esqDBReplicaCfg loggerEnv
+  kafkaProducerTools <- buildKafkaProducerTools kafkaProducerCfg
   coreMetrics <- registerCoreMetricsContainer
   slackEnv <- createSlackConfig slackToken slackChannel
-  kafkaProducerTools <- buildKafkaProducerTools kafkaProducerCfg
   let modifierFunc = ("dashboard:" <>)
   let nonCriticalModifierFunc = ("dashboard:non-critical:" <>)
   let requestId = Nothing
@@ -143,6 +145,7 @@ buildAppEnv authTokenCacheKeyPrefix AppCfg {..} = do
 
 releaseAppEnv :: AppEnv -> IO ()
 releaseAppEnv AppEnv {..} = do
+  releaseKafkaProducerTools kafkaProducerTools
   releaseLoggerEnv loggerEnv
   disconnectHedis hedisEnv
   disconnectHedis hedisClusterEnv

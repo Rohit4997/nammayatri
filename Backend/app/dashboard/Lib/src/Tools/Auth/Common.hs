@@ -12,7 +12,7 @@
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Tools.Auth.Common (verifyPerson, cleanCachedTokens, cleanCachedTokensByMerchantId, cleanCachedTokensByMerchantIdAndCity, AuthFlow) where
+module Tools.Auth.Common (verifyPerson, cleanCachedTokens, cleanCachedTokensByMerchantId, cleanCachedTokensByMerchantIdAndCity, AuthFlow, authTokenCacheKey) where
 
 import qualified Domain.Types.Merchant as DMerchant
 import qualified Domain.Types.Person as DP

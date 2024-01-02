@@ -17,12 +17,11 @@
 module Domain.Types.Merchant where
 
 import qualified Domain.Types.ServerName as DSN
-import Kernel.External.Encryption
 import Kernel.Prelude
 import qualified Kernel.Types.Beckn.City as City
 import Kernel.Types.Id
 
-data MerchantE e = Merchant
+data Merchant = Merchant
   { id :: Id Merchant,
     shortId :: ShortId Merchant,
     serverNames :: [DSN.ServerName],
@@ -32,30 +31,10 @@ data MerchantE e = Merchant
     companyName :: Maybe Text,
     domain :: Maybe Text,
     website :: Maybe Text,
-    email :: Maybe (EncryptedHashedField e Text),
-    passwordHash :: Maybe DbHash,
+    authToken :: Maybe Text,
     createdAt :: UTCTime
   }
   deriving (Generic)
-
-type Merchant = MerchantE 'AsEncrypted
-
-type DecryptedMerchant = MerchantE 'AsUnencrypted
-
-instance EncryptedItem Merchant where
-  type Unencrypted Merchant = (DecryptedMerchant, HashSalt)
-  encryptItem (Merchant {..}, salt) = do
-    email_ <- encryptItem $ (,salt) <$> email
-    return Merchant {email = email_, ..}
-  decryptItem Merchant {..} = do
-    email_ <- fmap fst <$> decryptItem email
-    return (Merchant {email = email_, ..}, "")
-
-instance EncryptedItem' Merchant where
-  type UnencryptedItem Merchant = DecryptedMerchant
-  toUnencrypted :: UnencryptedItem Merchant -> HashSalt -> Unencrypted Merchant
-  toUnencrypted a salt = (a, salt)
-  fromUnencrypted = fst
 
 data MerchantAPIEntity = MerchantAPIEntity
   { id :: Id Merchant,
@@ -63,11 +42,23 @@ data MerchantAPIEntity = MerchantAPIEntity
     companyName :: Maybe Text,
     domain :: Maybe Text,
     website :: Maybe Text,
-    email :: Maybe Text,
+    authToken :: Maybe Text,
     supportedOperatingCities :: [City.City],
-    defaultOperatingCity :: City.City
+    defaultOperatingCity :: City.City,
+    adminList :: [Text]
   }
   deriving (Show, Generic, FromJSON, ToJSON, ToSchema)
 
-mkMerchantAPIEntity :: DecryptedMerchant -> MerchantAPIEntity
-mkMerchantAPIEntity Merchant {..} = MerchantAPIEntity {..}
+mkMerchantAPIEntity :: Merchant -> [Text] -> MerchantAPIEntity
+mkMerchantAPIEntity merchant adminList = do
+  MerchantAPIEntity
+    { id = merchant.id,
+      shortId = merchant.shortId,
+      companyName = merchant.companyName,
+      domain = merchant.domain,
+      website = merchant.website,
+      supportedOperatingCities = merchant.supportedOperatingCities,
+      defaultOperatingCity = merchant.defaultOperatingCity,
+      authToken = merchant.authToken,
+      adminList = adminList
+    }

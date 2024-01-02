@@ -72,6 +72,8 @@ getServiceNameConfigJSON = \case
     Call.ExotelConfig cfg -> (Domain.CallService Call.Exotel, toJSON cfg)
   Domain.AadhaarVerificationServiceConfig aadhaarVerificationCfg -> case aadhaarVerificationCfg of
     AadhaarVerification.GridlineConfig cfg -> (Domain.AadhaarVerificationService AadhaarVerification.Gridline, toJSON cfg)
+  Domain.DriverVerificationServiceConfig driverVerificationcfg -> case driverVerificationcfg of
+    Verification.SafetyPortalConfig cfg -> (Domain.DriverVerificationService Verification.SafetyPortal, toJSON cfg)
   Domain.PaymentServiceConfig paymentCfg -> case paymentCfg of
     Payment.JuspayConfig cfg -> (Domain.PaymentService Payment.Juspay, toJSON cfg)
   Domain.RentalPaymentServiceConfig paymentCfg -> case paymentCfg of

@@ -46,6 +46,7 @@ data ServiceName
   | WhatsappService Whatsapp.WhatsappService
   | VerificationService Verification.VerificationService
   | AadhaarVerificationService AadhaarVerification.AadhaarVerificationService
+  | DriverVerificationService Verification.DriverVerificationService
   | CallService Call.CallService
   | PaymentService Payment.PaymentService
   | RentalPaymentService Payment.PaymentService
@@ -62,6 +63,7 @@ instance Show ServiceName where
   show (WhatsappService s) = "Whatsapp_" <> show s
   show (VerificationService s) = "Verification_" <> show s
   show (AadhaarVerificationService s) = "AadhaarVerification_" <> show s
+  show (DriverVerificationService s) = "DriverVerification_" <> show s
   show (CallService s) = "Call_" <> show s
   show (PaymentService s) = "Payment_" <> show s
   show (RentalPaymentService s) = "RentalPayment_" <> show s
@@ -91,6 +93,10 @@ instance Read ServiceName where
                ]
             ++ [ (AadhaarVerificationService v1, r2)
                  | r1 <- stripPrefix "AadhaarVerification_" r,
+                   (v1, r2) <- readsPrec (app_prec + 1) r1
+               ]
+            ++ [ (DriverVerificationService v1, r2)
+                 | r1 <- stripPrefix "DriverVerification_" r,
                    (v1, r2) <- readsPrec (app_prec + 1) r1
                ]
             ++ [ (CallService v1, r2)
@@ -124,6 +130,7 @@ data ServiceConfigD (s :: UsageSafety)
   | WhatsappServiceConfig !WhatsappServiceConfig
   | VerificationServiceConfig !VerificationServiceConfig
   | AadhaarVerificationServiceConfig !AadhaarVerificationServiceConfig
+  | DriverVerificationServiceConfig !DriverVerificationServiceConfig
   | CallServiceConfig !CallServiceConfig
   | PaymentServiceConfig !PaymentServiceConfig
   | RentalPaymentServiceConfig !PaymentServiceConfig
@@ -171,6 +178,8 @@ getServiceName osc = case osc.serviceConfig of
     Verification.GovtDataConfig -> VerificationService Verification.GovtData
   AadhaarVerificationServiceConfig aadhaarVerifictaionCfg -> case aadhaarVerifictaionCfg of
     AadhaarVerification.GridlineConfig _ -> AadhaarVerificationService AadhaarVerification.Gridline
+  DriverVerificationServiceConfig safetyPortalCfg -> case safetyPortalCfg of
+    Verification.SafetyPortalConfig _ -> DriverVerificationService Verification.SafetyPortal
   CallServiceConfig callCfg -> case callCfg of
     Call.ExotelConfig _ -> CallService Call.Exotel
   PaymentServiceConfig paymentCfg -> case paymentCfg of

@@ -14,10 +14,15 @@
 
 module Domain.Action.Dashboard.Merchant where
 
+import Dashboard.Common
 import qualified Data.Text as T
 import qualified Domain.Action.Dashboard.Person as DPerson
 import Domain.Types.Merchant
 import qualified Domain.Types.Merchant as DMerchant
+import qualified Domain.Types.Person as DP
+import qualified Domain.Types.Person.API as AP
+import qualified Domain.Types.Person.Type as SP
+import qualified Domain.Types.Role as DRole
 import qualified Domain.Types.ServerName as DTServer
 import Kernel.External.Encryption (decrypt, encrypt, getDbHash)
 import Kernel.Prelude
@@ -28,9 +33,29 @@ import Kernel.Types.Id
 import Kernel.Utils.Common
 import Storage.Beam.BeamFlow
 import qualified Storage.Queries.Merchant as QMerchant
+import qualified Storage.Queries.MerchantAccess as QAccess
 import qualified Storage.Queries.MerchantAccess as QMerchantAccess
+import qualified Storage.Queries.Person as QP
+import qualified Storage.Queries.Role as QRole
 import Tools.Auth
 import Tools.Error
+
+data CreateMerchantWithAdminReq = CreateMerchantWithAdminReq
+  { shortId :: Text,
+    is2faMandatory :: Bool,
+    defaultOperatingCity :: City.City,
+    supportedOperatingCities :: [City.City],
+    companyName :: Text,
+    domain :: Text,
+    website :: Text,
+    adminEmail :: Text,
+    adminPassword :: Text,
+    adminFirstName :: Text,
+    adminLastName :: Text,
+    adminMobileCountryCode :: Text,
+    adminMobileNumber :: Text
+  }
+  deriving (Generic, ToJSON, FromJSON, ToSchema)
 
 data CreateMerchantReq = CreateMerchantReq
   { shortId :: Text,
@@ -39,12 +64,36 @@ data CreateMerchantReq = CreateMerchantReq
     supportedOperatingCities :: [City.City],
     companyName :: Text,
     domain :: Text,
-    website :: Text,
-    email :: Text,
-    password :: Text,
-    numberOfUsers :: Int
+    website :: Text
   }
   deriving (Generic, ToJSON, FromJSON, ToSchema)
+
+data ListMerchantResp = ListMerchantResp
+  { list :: [DMerchant.MerchantAPIEntity],
+    summary :: Summary
+  }
+  deriving (Generic, ToJSON, FromJSON, ToSchema)
+
+createMerchantWithAdmin ::
+  (BeamFlow m r, EncFlow m r, HasFlowEnv m r '["dataServers" ::: [DTServer.DataServer]]) =>
+  TokenInfo ->
+  CreateMerchantWithAdminReq ->
+  m DP.PersonAPIEntity
+createMerchantWithAdmin tokenInfo req = do
+  let shortId = ShortId req.shortId :: ShortId DMerchant.Merchant
+  mbExistingMerchant <- QMerchant.findByShortId shortId
+  whenJust mbExistingMerchant $ \_ -> throwError (MerchantAlreadyExist req.shortId)
+  unlessM (isNothing <$> QP.findByEmail req.adminEmail) $ throwError (InvalidRequest "Email already registered")
+  unlessM (isNothing <$> QP.findByMobileNumber req.adminMobileNumber req.adminMobileCountryCode) $ throwError (InvalidRequest "Phone already registered")
+  role <- QRole.findByName "MERCHANT_ADMIN" >>= fromMaybeM (RoleDoesNotExist "MERCHANT_ADMIN")
+  person <- buildPersonCreateReq req role
+  decPerson <- decrypt person
+  QP.create person
+  merchant <- buildMerchant CreateMerchantReq {shortId = req.shortId, is2faMandatory = req.is2faMandatory, defaultOperatingCity = req.defaultOperatingCity, supportedOperatingCities = req.supportedOperatingCities, companyName = req.companyName, domain = req.domain, website = req.website}
+  QMerchant.create merchant
+  merchantAccess <- DPerson.buildMerchantAccess person.id merchant.id merchant.shortId tokenInfo.city
+  QAccess.create merchantAccess
+  pure $ AP.makePersonAPIEntity decPerson role [merchant.shortId] (Just [DP.AvailableCitiesForMerchant {merchantShortId = merchant.shortId, operatingCity = [req.defaultOperatingCity]}])
 
 createMerchant ::
   (BeamFlow m r, EncFlow m r) =>
@@ -56,9 +105,8 @@ createMerchant _ req = do
   mbExistingMerchant <- QMerchant.findByShortId shortId
   whenJust mbExistingMerchant $ \_ -> throwError (MerchantAlreadyExist req.shortId)
   merchant <- buildMerchant req
-  decMerchant <- decrypt merchant
   QMerchant.create merchant
-  pure $ DMerchant.mkMerchantAPIEntity decMerchant
+  pure $ DMerchant.mkMerchantAPIEntity merchant []
 
 buildMerchant ::
   (BeamFlow m r, EncFlow m r) =>
@@ -67,8 +115,7 @@ buildMerchant ::
 buildMerchant req = do
   uid <- generateGUID
   now <- getCurrentTime
-  passwordHash <- getDbHash req.password
-  email <- encrypt (T.toLower req.email)
+  authToken <- generateGUID
   pure
     DMerchant.Merchant
       { id = uid,
@@ -80,20 +127,29 @@ buildMerchant req = do
         companyName = Just req.companyName,
         domain = Just req.domain,
         website = Just req.website,
-        email = Just email,
-        passwordHash = Just passwordHash,
+        authToken = Just authToken,
         createdAt = now
       }
 
 listMerchants ::
   (BeamFlow m r, EncFlow m r) =>
   TokenInfo ->
-  m [DMerchant.MerchantAPIEntity]
-listMerchants _ = do
-  merchantList <- QMerchant.findAllMerchants
-  forM merchantList $ \encMerchant -> do
-    decMerchant <- decrypt encMerchant
-    pure $ DMerchant.mkMerchantAPIEntity decMerchant
+  Maybe Int ->
+  Maybe Int ->
+  m ListMerchantResp
+listMerchants _ mbLimit mbOffset = do
+  let limit = fromMaybe 10 mbLimit
+  let offset = fromMaybe 0 mbOffset
+  merchantList <- QMerchant.findAllMerchants' limit offset
+  list <-
+    forM merchantList $ \merchant -> do
+      allMerchantUsers <- QMerchantAccess.findAllUserAccountForMerchant merchant.id
+      let personIds = map (\x -> x.personId) allMerchantUsers
+      allPersons <- QP.findAllByIds personIds
+      decryptedPersons <- mapM (\person -> decrypt person) allPersons
+      let emailList = mapMaybe (\person -> person.email) decryptedPersons
+      pure $ DMerchant.mkMerchantAPIEntity merchant emailList
+  pure ListMerchantResp {list = list, summary = Summary {totalCount = 10000, count = length list}}
 
 createUserForMerchant ::
   (BeamFlow m r, EncFlow m r, HasFlowEnv m r '["dataServers" ::: [DTServer.DataServer]], HasFlowEnv m r '["merchantUserAccountNumber" ::: Int]) =>
@@ -108,3 +164,25 @@ createUserForMerchant tokenInfo req = do
   personEntity <- DPerson.createPerson tokenInfo req
   _ <- DPerson.assignMerchantCityAccess tokenInfo personEntity.person.id DPerson.MerchantCityAccessReq {operatingCity = tokenInfo.city, merchantId = merchant.shortId}
   pure personEntity
+
+buildPersonCreateReq :: (BeamFlow m r, EncFlow m r) => CreateMerchantWithAdminReq -> DRole.Role -> m SP.Person
+buildPersonCreateReq req role = do
+  pid <- generateGUID
+  now <- getCurrentTime
+  mobileNumber <- encrypt req.adminMobileNumber
+  email <- encrypt (T.toLower req.adminEmail)
+  passwordHash <- getDbHash req.adminPassword
+  return
+    SP.Person
+      { id = pid,
+        firstName = req.adminFirstName,
+        lastName = req.adminLastName,
+        email = Just email,
+        passwordHash = Just passwordHash,
+        mobileCountryCode = req.adminMobileCountryCode,
+        mobileNumber = mobileNumber,
+        roleId = role.id,
+        dashboardAccessType = Just role.dashboardAccessType,
+        createdAt = now,
+        updatedAt = now
+      }
