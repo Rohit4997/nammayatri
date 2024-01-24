@@ -25,6 +25,7 @@ import Servant
 import SharedLogic.External.LocationTrackingService.Types
 import Storage.Beam.IssueManagement ()
 import Storage.Beam.SystemConfigs ()
+import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.CachedQueries.Merchant.TransporterConfig as SCT
 import qualified Storage.Queries.Person as QP
 import qualified Storage.Queries.Ride as QR
@@ -55,6 +56,7 @@ driverIssueHandle =
   Common.ServiceHandle
     { findPersonById = castPersonById,
       findRideById = castRideById,
+      findMOCityById = castMOCityById,
       getRideInfo = castRideInfo,
       createTicket = castCreateTicket,
       updateTicket = castUpdateTicket
@@ -76,13 +78,25 @@ castPersonById driverId = do
           merchantOperatingCityId = cast person.merchantOperatingCityId
         }
 
-castRideById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.Ride -> m (Maybe Common.Ride)
-castRideById rideId = do
+castRideById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.Ride -> Id Common.Merchant -> m (Maybe Common.Ride)
+castRideById rideId _ = do
   ride <- runInReplica $ QR.findById (cast rideId)
   return $ fmap castRide ride
   where
     castRide ride =
-      Common.Ride (cast ride.id) (ShortId $ show ride.shortId) ride.createdAt
+      Common.Ride (cast ride.id) (ShortId $ show ride.shortId) (cast ride.merchantOperatingCityId) ride.createdAt
+
+castMOCityById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.MerchantOperatingCity -> m (Maybe Common.MerchantOperatingCity)
+castMOCityById moCityId = do
+  moCity <- CQMOC.findById (cast moCityId)
+  return $ fmap castMOCity moCity
+  where
+    castMOCity moCity =
+      Common.MerchantOperatingCity
+        { id = cast moCity.id,
+          merchantId = cast moCity.merchantId,
+          city = moCity.city
+        }
 
 castRideInfo ::
   ( EncFlow m r,

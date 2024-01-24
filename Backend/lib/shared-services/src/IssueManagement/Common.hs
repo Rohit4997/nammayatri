@@ -39,6 +39,7 @@ data Identifier = CUSTOMER | DRIVER
 data Ride = Ride
   { id :: Id Ride,
     shortId :: ShortId Ride,
+    merchantOperatingCityId :: Id MerchantOperatingCity,
     createdAt :: UTCTime
   }
 

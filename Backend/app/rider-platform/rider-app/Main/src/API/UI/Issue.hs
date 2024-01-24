@@ -24,6 +24,7 @@ import Servant
 import Storage.Beam.IssueManagement ()
 import Storage.Beam.SystemConfigs ()
 import qualified Storage.CachedQueries.Merchant as CQM
+import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.Queries.Person as QP
 import qualified Storage.Queries.Person as QPerson
 import qualified Storage.Queries.Ride as QR
@@ -54,6 +55,7 @@ customerIssueHandle =
   Common.ServiceHandle
     { findPersonById = castPersonById,
       findRideById = castRideById,
+      findMOCityById = castMOCityById,
       getRideInfo = castRideInfo,
       createTicket = castCreateTicket,
       updateTicket = castUpdateTicket
@@ -75,12 +77,27 @@ castPersonById personId = do
           merchantOperatingCityId = cast person.merchantOperatingCityId
         }
 
-castRideById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.Ride -> m (Maybe Common.Ride)
-castRideById rideId = do
+castRideById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.Ride -> Id Common.Merchant -> m (Maybe Common.Ride)
+castRideById rideId merchantId = do
   ride <- runInReplica $ QR.findById (cast rideId)
-  return $ fmap castRide ride
+  merchantOpCityId <- case (.merchantOperatingCityId) =<< ride of
+    Just moCityId -> return moCityId
+    Nothing -> (.id) <$> CQM.getDefaultMerchantOperatingCity (fromMaybe (cast merchantId) ((.merchantId) =<< ride))
+  return $ fmap (castRide merchantOpCityId) ride
   where
-    castRide ride = Common.Ride (cast ride.id) (ShortId $ show ride.shortId) ride.createdAt
+    castRide moCityId ride = Common.Ride (cast ride.id) (ShortId $ show ride.shortId) (cast moCityId) ride.createdAt
+
+castMOCityById :: (CacheFlow m r, EsqDBFlow m r, EsqDBReplicaFlow m r) => Id Common.MerchantOperatingCity -> m (Maybe Common.MerchantOperatingCity)
+castMOCityById moCityId = do
+  moCity <- CQMOC.findById (cast moCityId)
+  return $ fmap castMOCity moCity
+  where
+    castMOCity moCity =
+      Common.MerchantOperatingCity
+        { id = cast moCity.id,
+          merchantId = cast moCity.merchantId,
+          city = moCity.city
+        }
 
 castRideInfo :: (EncFlow m r, EsqDBReplicaFlow m r, CacheFlow m r, EsqDBFlow m r) => Id Common.Merchant -> Id Common.MerchantOperatingCity -> Id Common.Ride -> m Common.RideInfoRes
 castRideInfo merchantId _ rideId = do

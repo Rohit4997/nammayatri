@@ -244,6 +244,7 @@ buildRideInfo :: DRide.Ride -> Person.Person -> Maybe Text -> Ticket.RideInfo
 buildRideInfo ride person phoneNumber =
   Ticket.RideInfo
     { rideShortId = ride.shortId.getShortId,
+      rideCity = show person.currentCity,
       customerName = Just $ SLP.getName person,
       customerPhoneNo = phoneNumber,
       driverName = Just ride.driverName,
