@@ -11,7 +11,6 @@
 
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
-{-# OPTIONS_GHC -Wwarn=incomplete-record-updates #-}
 
 module Domain.Action.Beckn.Status
   ( handler,
@@ -45,28 +44,12 @@ data DStatusRes = DStatusRes
   }
 
 data OnStatusBuildReq
-  = NewBookingBuildReq
-      { bookingId :: Id DBooking.Booking
-      }
-  | RideAssignedBuildReq
-      { bookingId :: Id DBooking.Booking,
-        newRideInfo :: SyncRide.NewRideInfo
-      }
-  | RideStartedBuildReq
-      { newRideInfo :: SyncRide.NewRideInfo
-      }
-  | RideCompletedBuildReq
-      { newRideInfo :: SyncRide.NewRideInfo,
-        rideCompletedInfo :: SyncRide.RideCompletedInfo
-      }
-  | BookingCancelledBuildReq
-      { bookingCancelledInfo :: SyncRide.BookingCancelledInfo,
-        mbNewRideInfo :: Maybe SyncRide.NewRideInfo
-      }
-  | BookingReallocationBuildReq
-      { bookingReallocationInfo :: SyncRide.BookingReallocationInfo,
-        newRideInfo :: SyncRide.NewRideInfo
-      }
+  = NewBookingBuildReq (Id DBooking.Booking)
+  | RideAssignedBuildReq (Id DBooking.Booking) SyncRide.NewRideInfo
+  | RideStartedBuildReq SyncRide.NewRideInfo
+  | RideCompletedBuildReq SyncRide.NewRideInfo SyncRide.RideCompletedInfo
+  | BookingCancelledBuildReq (Maybe SyncRide.NewRideInfo) SyncRide.BookingCancelledInfo
+  | BookingReallocationBuildReq SyncRide.NewRideInfo SyncRide.BookingReallocationInfo
 
 handler ::
   Id DM.Merchant ->
@@ -85,35 +68,35 @@ handler transporterId req = do
       case ride.status of
         DRide.NEW -> do
           newRideInfo <- SyncRide.fetchNewRideInfo ride booking
-          pure $ RideAssignedBuildReq {bookingId = booking.id, newRideInfo = newRideInfo}
+          pure $ RideAssignedBuildReq booking.id newRideInfo
         DRide.INPROGRESS -> do
           newRideInfo <- SyncRide.fetchNewRideInfo ride booking
-          pure $ RideStartedBuildReq {newRideInfo}
+          pure $ RideStartedBuildReq newRideInfo
         DRide.COMPLETED -> do
           newRideInfo <- SyncRide.fetchNewRideInfo ride booking
           rideCompletedInfo <- SyncRide.fetchRideCompletedInfo ride booking
-          pure $ RideCompletedBuildReq {newRideInfo, rideCompletedInfo}
+          pure $ RideCompletedBuildReq newRideInfo rideCompletedInfo
         DRide.CANCELLED -> do
           case booking.status of
             DBooking.REALLOCATED -> do
               newRideInfo <- SyncRide.fetchNewRideInfo ride booking
               bookingReallocationInfo <- SyncRide.fetchBookingReallocationInfo (Just ride) booking
-              pure $ BookingReallocationBuildReq {newRideInfo, bookingReallocationInfo}
+              pure $ BookingReallocationBuildReq newRideInfo bookingReallocationInfo
             _ -> do
               newRideInfo <- SyncRide.fetchNewRideInfo ride booking
               bookingCancelledInfo <- SyncRide.fetchBookingCancelledInfo (Just ride) booking
-              pure $ BookingCancelledBuildReq {mbNewRideInfo = Just newRideInfo, bookingCancelledInfo}
+              pure $ BookingCancelledBuildReq (Just newRideInfo) bookingCancelledInfo
     Nothing -> do
       case booking.status of
         DBooking.NEW -> do
-          pure $ NewBookingBuildReq {bookingId = booking.id}
+          pure $ NewBookingBuildReq booking.id
         DBooking.TRIP_ASSIGNED -> do
           throwError (RideNotFound $ "BookingId: " <> booking.id.getId)
         DBooking.COMPLETED -> do
           throwError (RideNotFound $ "BookingId: " <> booking.id.getId)
         DBooking.CANCELLED -> do
           bookingCancelledInfo <- SyncRide.fetchBookingCancelledInfo Nothing booking
-          pure $ BookingCancelledBuildReq {mbNewRideInfo = Nothing, bookingCancelledInfo}
+          pure $ BookingCancelledBuildReq Nothing bookingCancelledInfo
         DBooking.REALLOCATED -> do
           throwError (RideNotFound $ "BookingId: " <> booking.id.getId)
   pure DStatusRes {transporter, info}
