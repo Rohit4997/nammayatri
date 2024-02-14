@@ -55,7 +55,7 @@ parseOrder (OnStatus.RideAssigned raOrder) = do
   pure
     DOnStatus.DOnStatusReq
       { bppBookingId = Id raOrder.id,
-        rideDetails = DOnStatus.RideAssignedDetails {newRideInfo}
+        rideDetails = DOnStatus.RideAssignedDetails newRideInfo
       }
 parseOrder (OnStatus.RideStarted rsOrder) = do
   newRideInfo <- buildNewRideInfo rsOrder.fulfillment
@@ -72,7 +72,7 @@ parseOrder (OnStatus.RideStarted rsOrder) = do
   pure
     DOnStatus.DOnStatusReq
       { bppBookingId = Id rsOrder.id,
-        rideDetails = DOnStatus.RideStartedDetails {newRideInfo, rideStartedInfo}
+        rideDetails = DOnStatus.RideStartedDetails newRideInfo rideStartedInfo
       }
 parseOrder (OnStatus.RideCompleted rcOrder) = do
   tagsGroup <- fromMaybeM (InvalidRequest "agent tags is not present in RideCompleted Order.") rcOrder.fulfillment.tags
@@ -108,7 +108,7 @@ parseOrder (OnStatus.RideCompleted rcOrder) = do
   pure
     DOnStatus.DOnStatusReq
       { bppBookingId = Id rcOrder.id,
-        rideDetails = DOnStatus.RideCompletedDetails {newRideInfo, rideStartedInfo, rideCompletedInfo}
+        rideDetails = DOnStatus.RideCompletedDetails newRideInfo rideStartedInfo rideCompletedInfo
       }
   where
     mkOnStatusFareBreakup breakup =
@@ -121,22 +121,18 @@ parseOrder (OnStatus.BookingCancelled bcOrder) = do
   pure
     DOnStatus.DOnStatusReq
       { bppBookingId = Id bcOrder.id,
-        rideDetails =
-          DOnStatus.BookingCancelledDetails
-            { mbNewRideInfo,
-              cancellationSource = Common.castCancellationSource bcOrder.cancellation_reason
-            }
+        rideDetails = do
+          let cancellationSource = Common.castCancellationSource bcOrder.cancellation_reason
+          DOnStatus.BookingCancelledDetails mbNewRideInfo cancellationSource
       }
 parseOrder (OnStatus.BookingReallocation brOrder) = do
   newRideInfo <- buildNewRideInfo brOrder.fulfillment
   pure
     DOnStatus.DOnStatusReq
       { bppBookingId = Id brOrder.id,
-        rideDetails =
-          DOnStatus.BookingReallocationDetails
-            { newRideInfo,
-              reallocationSource = Common.castCancellationSource brOrder.reallocation_reason
-            }
+        rideDetails = do
+          let reallocationSource = Common.castCancellationSource brOrder.reallocation_reason
+          DOnStatus.BookingReallocationDetails newRideInfo reallocationSource
       }
 
 buildNewRideInfo :: (MonadFlow m) => OnStatusRideAssigned.FulfillmentInfo -> m DOnStatus.NewRideInfo
@@ -213,20 +209,20 @@ buildOnStatusReqV2 req = do
 parseRideAssignedOrder :: (MonadFlow m) => Spec.Order -> m DOnStatus.RideDetails
 parseRideAssignedOrder order = do
   newRideInfo <- buildNewRideInfoV2 order
-  pure $ DOnStatus.RideAssignedDetails {newRideInfo}
+  pure $ DOnStatus.RideAssignedDetails newRideInfo
 
 parseRideStartedOrder :: (MonadFlow m) => Spec.Order -> m DOnStatus.RideDetails
 parseRideStartedOrder order = do
   newRideInfo <- buildNewRideInfoV2 order
   rideStartedInfo <- buildRideStartedInfo order
-  pure $ DOnStatus.RideStartedDetails {..}
+  pure $ DOnStatus.RideStartedDetails newRideInfo rideStartedInfo
 
 parseRideCompletedOrder :: (MonadFlow m) => Spec.Order -> m DOnStatus.RideDetails
 parseRideCompletedOrder order = do
   newRideInfo <- buildNewRideInfoV2 order
   rideStartedInfo <- buildRideStartedInfo order
   rideCompletedInfo <- buildRideCompletedInfo order
-  pure $ DOnStatus.RideCompletedDetails {..}
+  pure $ DOnStatus.RideCompletedDetails newRideInfo rideStartedInfo rideCompletedInfo
 
 parseRideBookingCancelledOrder :: (MonadFlow m) => Spec.Order -> m DOnStatus.RideDetails
 parseRideBookingCancelledOrder order = do
@@ -236,14 +232,14 @@ parseRideBookingCancelledOrder order = do
       Nothing -> pure Nothing
   cancellationSourceText <- order.orderCancellation >>= (.cancellationCancelledBy) & fromMaybeM (InvalidRequest "order.cancellation.cancelled_by is not present in on_status BookingCancelledEvent request.")
   let cancellationSource = Utils.castCancellationSourceV2 cancellationSourceText
-  pure $ DOnStatus.BookingCancelledDetails {..}
+  pure $ DOnStatus.BookingCancelledDetails mbNewRideInfo cancellationSource
 
 parseRideBookingReallocationOrder :: (MonadFlow m) => Spec.Order -> m DOnStatus.RideDetails
 parseRideBookingReallocationOrder order = do
   newRideInfo <- buildNewRideInfoV2 order
   reallocationSourceText <- order.orderCancellation >>= (.cancellationCancelledBy) & fromMaybeM (InvalidRequest "order.cancellation.,cancelled_by is not present in on_status BookingReallocationEvent request.")
   let reallocationSource = Utils.castCancellationSourceV2 reallocationSourceText
-  pure $ DOnStatus.BookingReallocationDetails {..}
+  pure $ DOnStatus.BookingReallocationDetails newRideInfo reallocationSource
 
 buildNewRideInfoV2 :: (MonadFlow m) => Spec.Order -> m DOnStatus.NewRideInfo
 buildNewRideInfoV2 order = do
