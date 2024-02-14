@@ -227,14 +227,20 @@ editLocation rideId (_, merchantId) req = do
     let origin = Just $ mkDomainLocation pickup
     bppBookingId <- booking.bppBookingId & fromMaybeM (BookingFieldNotPresent "bppBookingId")
     let dUpdateReq =
-          ACL.EditLocationBuildReq
-            { bppRideId = ride.bppRideId,
+          ACL.UpdateBuildReq
+            { bppBookingId,
+              merchant,
               bppId = booking.providerId,
               bppUrl = booking.providerUrl,
               transactionId = booking.transactionId,
-              destination = Nothing,
               city = merchant.defaultCity, -- TODO: Correct during interoperability
-              ..
+              details =
+                ACL.EditLocationBuildReqDetails $
+                  ACL.ELBuildReqDetails
+                    { bppRideId = ride.bppRideId,
+                      origin,
+                      destination = Nothing
+                    }
             }
     becknUpdateReq <- ACL.buildUpdateReq dUpdateReq
     void . withShortRetry $ CallBPP.update booking.providerUrl becknUpdateReq
