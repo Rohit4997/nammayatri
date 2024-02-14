@@ -11,8 +11,6 @@
 
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
-{-# OPTIONS_GHC -Wwarn=incomplete-record-updates #-}
-{-# OPTIONS_GHC -Wwarn=incomplete-uni-patterns #-}
 
 module Domain.Action.Beckn.Update where
 
@@ -42,31 +40,45 @@ import Tools.Error
 import qualified Tools.Notifications as Notify
 
 data DUpdateReq
-  = PaymentCompletedReq
-      { bookingId :: Id DBooking.Booking,
-        rideId :: Id DRide.Ride,
-        paymentStatus :: PaymentStatus,
-        paymentMethodInfo :: DMPM.PaymentMethodInfo
-      }
-  | EditLocationReq
-      { bookingId :: Id DBooking.Booking,
-        rideId :: Id DRide.Ride,
-        origin :: Maybe Common.Location,
-        destination :: Maybe Common.Location
-      }
-  | AddStopReq
-      { bookingId :: Id DBooking.Booking,
-        stops :: [Common.Location]
-      }
-  | EditStopReq
-      { bookingId :: Id DBooking.Booking,
-        stops :: [Common.Location]
-      }
+  = PaymentCompletedReq PCReq
+  | EditLocationReq ELReq
+  | AddStopReq ASReq
+  | EditStopReq ESReq
+
+data PCReq = PCReq
+  { bookingId :: Id DBooking.Booking,
+    rideId :: Id DRide.Ride,
+    paymentStatus :: PaymentStatus,
+    paymentMethodInfo :: DMPM.PaymentMethodInfo
+  }
+
+data ELReq = ELReq
+  { bookingId :: Id DBooking.Booking,
+    rideId :: Id DRide.Ride,
+    origin :: Maybe Common.Location,
+    destination :: Maybe Common.Location
+  }
+
+data ASReq = ASReq
+  { bookingId :: Id DBooking.Booking,
+    stops :: [Common.Location]
+  }
+
+data ESReq = ESReq
+  { bookingId :: Id DBooking.Booking,
+    stops :: [Common.Location]
+  }
+
+getBookingId :: DUpdateReq -> Id DBooking.Booking
+getBookingId (PaymentCompletedReq req) = req.bookingId
+getBookingId (EditLocationReq req) = req.bookingId
+getBookingId (AddStopReq req) = req.bookingId
+getBookingId (EditStopReq req) = req.bookingId
 
 data PaymentStatus = PAID | NOT_PAID
 
 handler :: DUpdateReq -> Flow ()
-handler req@PaymentCompletedReq {} = do
+handler (PaymentCompletedReq req@PCReq {}) = do
   unless (req.paymentMethodInfo.paymentType == DMPM.POSTPAID) $
     throwError $ InvalidRequest "Payment completed update available only for POSTPAID payments."
   unless (req.paymentMethodInfo.collectedBy == DMPM.BAP) $
@@ -87,17 +99,17 @@ handler req@PaymentCompletedReq {} = do
   unless (ride.status == DRide.COMPLETED) $
     throwError $ RideInvalidStatus "Ride is not completed yet."
   logTagInfo "Payment completed : " ("bookingId " <> req.bookingId.getId <> ", rideId " <> req.rideId.getId)
-handler AddStopReq {..} = do
+handler (AddStopReq ASReq {..}) = do
   booking <- QRB.findById bookingId >>= fromMaybeM (BookingDoesNotExist bookingId.getId)
   case listToMaybe stops of
     Nothing -> throwError (InvalidRequest $ "No stop information received from rider side for booking " <> bookingId.getId)
     Just loc -> processStop booking loc False
-handler EditStopReq {..} = do
+handler (EditStopReq ESReq {..}) = do
   booking <- QRB.findById bookingId >>= fromMaybeM (BookingDoesNotExist bookingId.getId)
   case listToMaybe stops of
     Nothing -> throwError (InvalidRequest $ "No stop information received from rider side for booking " <> bookingId.getId)
     Just loc -> processStop booking loc True
-handler EditLocationReq {..} = do
+handler (EditLocationReq ELReq {..}) = do
   ride <- runInReplica $ QRide.findById rideId >>= fromMaybeM (RideNotFound rideId.getId)
   person <- runInReplica $ QPerson.findById ride.driverId >>= fromMaybeM (PersonNotFound ride.driverId.getId)
   whenJust origin $ \pickup -> do
