@@ -45,6 +45,7 @@ data DUpdateReq
   | AddStopReq ASReq
   | EditStopReq ESReq
 
+-- FIXME data DPaymentCompleted
 data PCReq = PCReq
   { bookingId :: Id DBooking.Booking,
     rideId :: Id DRide.Ride,
