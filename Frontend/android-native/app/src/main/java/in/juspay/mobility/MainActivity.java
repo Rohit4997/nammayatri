@@ -309,7 +309,10 @@ public class MainActivity extends AppCompatActivity {
 
         mFirebaseAnalytics.logEvent(isMigrated ?"migrate_local_store_success" : "migrate_local_store_failed",new Bundle());
         CleverTapAPI cleverTap = CleverTapAPI.getDefaultInstance(context);
-        CleverTapAPI.createNotificationChannel(context,clientId,clientId,"notification",NotificationManager.IMPORTANCE_MAX,true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CleverTapAPI.createNotificationChannel(context,clientId,clientId,"notification",NotificationManager.IMPORTANCE_MAX,true);
+            CleverTapAPI.createNotificationChannel(context,"nammayatriHindi","nammayatriHindi","notification",NotificationManager.IMPORTANCE_MAX,true,"clevertap_custom_notification.mp3");
+        }
         CleverTapAPI.setDebugLevel(CleverTapAPI.LogLevel.VERBOSE);
         cleverTap.enableDeviceNetworkInfoReporting(true);
         CleverTapAPI.setNotificationHandler((NotificationHandler)new PushTemplateNotificationHandler());
