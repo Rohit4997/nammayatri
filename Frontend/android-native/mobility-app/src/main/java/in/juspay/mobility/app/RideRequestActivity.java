@@ -61,6 +61,7 @@ public class RideRequestActivity extends AppCompatActivity {
     private SharedPreferences sharedPref;
 
     private String service = "";
+    private String DUMMY_FROM_LOCATION = "dummyFromLocation";
 
     public static RideRequestActivity getInstance() {
         return instance;
@@ -142,7 +143,8 @@ public class RideRequestActivity extends AppCompatActivity {
     private void updateTagsView (SheetAdapter.SheetViewHolder holder, SheetModel model) {
         mainLooper.post(() -> {
             String variant = model.getRequestedVehicleVariant();
-            if (model.getCustomerTip() > 0 || model.getDisabilityTag() || model.isGotoTag()) {
+            String searchRequestId = model.getSearchRequestId();
+            if (model.getCustomerTip() > 0 || model.getDisabilityTag() || model.isGotoTag() || searchRequestId.equals(DUMMY_FROM_LOCATION)) {
                 holder.tagsBlock.setVisibility(View.VISIBLE);
                 holder.accessibilityTag.setVisibility(model.getDisabilityTag() ? View.VISIBLE: View.GONE);
                 holder.textIncludesCharges.setText(model.getCustomerTip() > 0 ?
@@ -150,6 +152,7 @@ public class RideRequestActivity extends AppCompatActivity {
                         getString(R.string.includes_pickup_charges_10));
                 holder.customerTipTag.setVisibility(model.getCustomerTip() > 0 ? View.VISIBLE : View.GONE);
                 holder.customerTipText.setText(sharedPref.getString("CURRENCY", "₹") + " " + model.getCustomerTip());
+                holder.testRequestTag.setVisibility(searchRequestId.equals(DUMMY_FROM_LOCATION) ? View.VISIBLE : View.GONE);
                 holder.gotoTag.setVisibility(model.isGotoTag() ? View.VISIBLE : View.GONE);
                 holder.reqButton.setTextColor(model.isGotoTag() ? getColor(R.color.yellow900) : getColor(R.color.white));
                 holder.reqButton.setBackgroundTintList(model.isGotoTag() ?
@@ -162,7 +165,7 @@ public class RideRequestActivity extends AppCompatActivity {
                         holder.rideTypeTag.setVisibility(View.VISIBLE);
                     } else {
                         holder.rideTypeTag.setVisibility(View.VISIBLE);
-                        holder.rideTypeTag.setBackgroundResource(R.drawable.ic_non_ac_variant_tag);
+                        holder.rideTypeTag.setBackgroundResource(R.drawable.ic_orange_tag);
                         holder.rideTypeImage.setVisibility(View.GONE);
                     }
                     holder.rideTypeText.setText(variant);
@@ -278,6 +281,11 @@ public class RideRequestActivity extends AppCompatActivity {
                 }
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 executor.execute(() -> {
+                    if (model.getSearchRequestId().equals(DUMMY_FROM_LOCATION)) {
+                        respondDummyRequest();
+                        removeCard(position);
+                        return;
+                    }
                     Boolean isApiSuccess = RideRequestUtils.driverRespondApi(model.getSearchRequestId(), model.getOfferedPrice(), true, RideRequestActivity.this, sheetArrayList.indexOf(model));
                     if (isApiSuccess) {
                         mainLooper.post(executor::shutdown);
@@ -288,6 +296,11 @@ public class RideRequestActivity extends AppCompatActivity {
             holder.rejectButton.setOnClickListener(view -> {
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 executor.execute(() -> {
+                    if (model.getSearchRequestId().equals(DUMMY_FROM_LOCATION)) {
+                        respondDummyRequest();
+                        removeCard(position);
+                        return;
+                    }
                     new Thread(() -> RideRequestUtils.driverRespondApi(model.getSearchRequestId(), model.getOfferedPrice(), false, RideRequestActivity.this, sheetArrayList.indexOf(model))).start();
                     holder.rejectButton.setClickable(false);
                     mainLooper.post(() -> {
@@ -357,6 +370,13 @@ public class RideRequestActivity extends AppCompatActivity {
             });
         }
     });
+
+    private void respondDummyRequest() {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> {
+            Toast.makeText(getApplicationContext(), getString(R.string.test_request_successful), Toast.LENGTH_SHORT).show();
+        });
+    }
 
     private void startTimer() {
         TimerTask countUpTimerTask = new TimerTask() {

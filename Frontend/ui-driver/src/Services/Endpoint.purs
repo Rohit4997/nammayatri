@@ -288,3 +288,5 @@ convertCoinToCash _ =  (getBaseUrl "") <> "/coins/convertCoinToCash"
 
 pushSDKEvents :: String -> String
 pushSDKEvents _ =  (getBaseUrl "") <> "/sdk/events"
+dummyRideRequest :: String -> String
+dummyRideRequest _ =  (getBaseUrl "") <> "/driver/getDummyRideRequest"
