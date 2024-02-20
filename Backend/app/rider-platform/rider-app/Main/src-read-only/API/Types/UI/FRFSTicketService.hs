@@ -32,6 +32,19 @@ data FRFSBookingPaymentAPI = FRFSBookingPaymentAPI
 data FRFSBookingPaymentStatusAPI = NEW | PENDING | SUCCESS | FAILURE | REFUNDED
   deriving (Eq, Show, Generic, ToJSON, FromJSON, ToSchema)
 
+data FRFSCanCancelStatus = FRFSCanCancelStatus
+  { cancellationCharges :: Data.Maybe.Maybe Kernel.Types.Common.HighPrecMoney,
+    isCancellable :: Data.Maybe.Maybe Kernel.Prelude.Bool,
+    refundAmount :: Data.Maybe.Maybe Kernel.Types.Common.HighPrecMoney
+  }
+  deriving (Generic, ToJSON, FromJSON, ToSchema)
+
+data FRFSCancelStatus = FRFSCancelStatus
+  { cancellationCharges :: Data.Maybe.Maybe Kernel.Types.Common.HighPrecMoney,
+    refundAmount :: Data.Maybe.Maybe Kernel.Types.Common.HighPrecMoney
+  }
+  deriving (Generic, ToJSON, FromJSON, ToSchema)
+
 data FRFSQuoteAPIRes = FRFSQuoteAPIRes
   { _type :: Domain.Types.FRFSQuote.FRFSQuoteType,
     price :: Kernel.Types.Common.HighPrecMoney,
@@ -78,7 +91,6 @@ data FRFSTicketAPI = FRFSTicketAPI
 data FRFSTicketBookingStatusAPIRes = FRFSTicketBookingStatusAPIRes
   { _type :: Domain.Types.FRFSQuote.FRFSQuoteType,
     bookingId :: Kernel.Types.Id.Id Domain.Types.FRFSTicketBooking.FRFSTicketBooking,
-    createdAt :: Kernel.Prelude.UTCTime,
     payment :: Data.Maybe.Maybe API.Types.UI.FRFSTicketService.FRFSBookingPaymentAPI,
     price :: Kernel.Types.Common.HighPrecMoney,
     quantity :: Kernel.Prelude.Int,

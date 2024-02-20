@@ -58,7 +58,7 @@ validateRequest DOrder {..} = do
       bapConfig <- QBC.findByMerchantIdAndDomain (Just merchantId) (show Spec.FRFS) >>= fromMaybeM (InternalError "Beckn Config not found")
       void $ QTBooking.updateBPPOrderIdAndStatusById (Just bppOrderId) Booking.FAILED booking.id
       let updatedBooking = booking {Booking.bppOrderId = (Just bppOrderId)}
-      callBPPCancel updatedBooking bapConfig
+      callBPPCancel updatedBooking bapConfig Spec.CONFIRM_CANCEL
       throwM $ (InvalidRequest "Booking expired, initated cancel request")
     else do
       -- Booking is valid, proceed to onConfirm handler
@@ -155,12 +155,12 @@ buildRecon recon ticket = do
         Recon.updatedAt = now
       }
 
-callBPPCancel :: DFRFSTicketBooking.FRFSTicketBooking -> BecknConfig -> Environment.Flow ()
-callBPPCancel booking bapConfig = do
+callBPPCancel :: DFRFSTicketBooking.FRFSTicketBooking -> BecknConfig -> Spec.CancellationType -> Environment.Flow ()
+callBPPCancel booking bapConfig cancellationType = do
   fork "FRFS Cancel Req" $ do
     providerUrl <- booking.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
     merchantOperatingCity <- getMerchantOperatingCityFromBooking booking
-    bknCancelReq <- ACL.buildCancelReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl} merchantOperatingCity.city
+    bknCancelReq <- ACL.buildCancelReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl} cancellationType merchantOperatingCity.city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknCancelReq)
     void $ CallBPP.cancel providerUrl bknCancelReq
 
