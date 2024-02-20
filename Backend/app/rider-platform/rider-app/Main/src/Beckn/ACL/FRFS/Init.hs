@@ -24,6 +24,7 @@ import Data.List (singleton)
 import Domain.Types.BecknConfig
 import qualified Domain.Types.FRFSTicketBooking as DTBooking
 import Kernel.Prelude
+import Kernel.Types.Beckn.Context as Context
 import Kernel.Utils.Common
 
 type RiderName = Text
@@ -36,8 +37,9 @@ buildInitReq ::
   DTBooking.FRFSTicketBooking ->
   BecknConfig ->
   Utils.BppData ->
+  Context.City ->
   m (Spec.InitReq)
-buildInitReq rider tBooking bapConfig bppData = do
+buildInitReq rider tBooking bapConfig bppData city = do
   now <- getCurrentTime
   let transactionId = tBooking.searchId.getId
   let messageId = tBooking.id.getId
@@ -45,7 +47,7 @@ buildInitReq rider tBooking bapConfig bppData = do
 
   let mPaymentParams = bapConfig.paymentParamsJson >>= decodeFromText
   let mSettlementType = bapConfig.settlementType
-  context <- Utils.buildContext Spec.INIT bapConfig transactionId messageId (Just $ Utils.durationToText ttl) (Just bppData)
+  context <- Utils.buildContext Spec.INIT bapConfig transactionId messageId (Just $ Utils.durationToText ttl) (Just bppData) city
 
   pure $
     Spec.InitReq

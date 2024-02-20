@@ -13,6 +13,7 @@ import qualified Beckn.ACL.FRFS.Utils as Utils
 import qualified BecknV2.FRFS.Enums as Spec
 import Control.Monad.Extra hiding (fromMaybeM)
 import Data.OpenApi (ToSchema)
+import qualified Domain.Action.Beckn.FRFS.OnConfirm as DACFOC
 import Domain.Types.BecknConfig
 import qualified Domain.Types.BookingCancellationReason as DBCR
 import qualified Domain.Types.FRFSQuote as DFRFSQuote
@@ -24,6 +25,7 @@ import qualified Domain.Types.FRFSTicketBookingPayment as DFRFSTicketBookingPaym
 import qualified Domain.Types.FRFSTrip as DFRFSTrip
 import qualified Domain.Types.Merchant
 import qualified Domain.Types.Merchant as Merchant
+import Domain.Types.MerchantOperatingCity as DMOC
 import qualified Domain.Types.Person
 import qualified Domain.Types.Person as DP
 import qualified Domain.Types.Station as Station
@@ -36,6 +38,7 @@ import qualified Kernel.External.Payment.Interface.Types as Payment
 import Kernel.Prelude
 import qualified Kernel.Prelude
 import Kernel.Types.Beckn.City
+import Kernel.Types.Beckn.Context as Context
 import Kernel.Types.Error (MerchantError (MerchantOperatingCityNotFound))
 import Kernel.Types.Id
 import Kernel.Utils.Common
@@ -73,7 +76,7 @@ getFrfsStations (_personId, mId) mbCity vehicleType_ = do
     Nothing -> return []
     Just city -> do
       merchantOpCity <- CQMOC.findByMerchantIdAndCity mId city >>= fromMaybeM (MerchantOperatingCityNotFound $ "merchant-Id-" <> mId.getId <> "-city-" <> show city)
-      stations <- B.runInReplica $ QS.getTicketPlacesByVehicleTypeAndMOCityId vehicleType_ merchantOpCity.id
+      stations <- B.runInReplica $ QS.getTicketPlacesByMerchantOperatingCityIdAndVehicleType merchantOpCity.id vehicleType_
       return $
         map
           ( \Station.Station {..} ->
@@ -93,6 +96,7 @@ postFrfsSearch (mbPersonId, merchantId) vehicleType_ FRFSSearchAPIReq {..} = do
   bapConfig <- QBC.findByMerchantIdAndDomain (Just merchant.id) (show Spec.FRFS) >>= fromMaybeM (InternalError "Beckn Config not found")
   fromStation <- QStation.findByStationCode fromStationCode >>= fromMaybeM (InvalidRequest "Invalid from station id")
   toStation <- QStation.findByStationCode toStationCode >>= fromMaybeM (InvalidRequest "Invalid to station id")
+  merchantOperatingCity <- CQMOC.findById fromStation.merchantOperatingCityId >>= fromMaybeM (MerchantOperatingCityNotFound $ "merchantOperatingCityId- " <> show fromStation.merchantOperatingCityId)
 
   searchReqId <- generateGUID
   now <- getCurrentTime
@@ -112,7 +116,7 @@ postFrfsSearch (mbPersonId, merchantId) vehicleType_ FRFSSearchAPIReq {..} = do
           }
   QFRFSSearch.create searchReq
   fork "FRFS SearchReq" $ do
-    bknSearchReq <- ACL.buildSearchReq searchReq bapConfig fromStation toStation
+    bknSearchReq <- ACL.buildSearchReq searchReq bapConfig fromStation toStation merchantOperatingCity.city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknSearchReq)
     void $ CallBPP.search bapConfig.gatewayUrl bknSearchReq
   return $ FRFSSearchAPIRes searchReqId
@@ -152,13 +156,14 @@ postFrfsQuoteConfirm (mbPersonId, merchantId_) quoteId = do
   when (dConfirmRes.status == DFRFSTicketBooking.NEW && dConfirmRes.validTill > now) $ do
     providerUrl <- dConfirmRes.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
     bapConfig <- QBC.findByMerchantIdAndDomain (Just merchant.id) (show Spec.FRFS) >>= fromMaybeM (InternalError "Beckn Config not found")
+    merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking dConfirmRes
     let mRiderName = rider.firstName <&> (\fName -> rider.lastName & maybe fName (\lName -> fName <> " " <> lName))
     mRiderNumber <- mapM decrypt rider.mobileNumber
     -- Add default TTL of 30 seconds or the value provided in the config
     let validTill = addUTCTime (maybe 30 intToNominalDiffTime bapConfig.initTTLSec) now
     void $ QFRFSTicketBooking.updateValidTillById validTill dConfirmRes.id
     let dConfirmRes' = dConfirmRes {DFRFSTicketBooking.validTill = validTill}
-    bknInitReq <- ACL.buildInitReq (mRiderName, mRiderNumber) dConfirmRes' bapConfig Utils.BppData {bppId = dConfirmRes.bppSubscriberId, bppUri = dConfirmRes.bppSubscriberUrl}
+    bknInitReq <- ACL.buildInitReq (mRiderName, mRiderNumber) dConfirmRes' bapConfig Utils.BppData {bppId = dConfirmRes.bppSubscriberId, bppUri = dConfirmRes.bppSubscriberUrl} merchantOperatingCity.city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknInitReq)
     void $ CallBPP.init providerUrl bknInitReq
   return $ makeBookingStatusAPI dConfirmRes stations
@@ -228,6 +233,7 @@ getFrfsBookingStatus (mbPersonId, merchantId_) bookingId = do
   when (booking'.status /= DFRFSTicketBooking.CONFIRMED && booking'.status /= DFRFSTicketBooking.FAILED && booking'.validTill < now) $
     void $ QFRFSTicketBooking.updateStatusById DFRFSTicketBooking.FAILED bookingId
   booking <- QFRFSTicketBooking.findById bookingId >>= fromMaybeM (InvalidRequest "Invalid booking id")
+  merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking booking
   let commonPersonId = Kernel.Types.Id.cast @DP.Person @DPayment.Person person.id
   case booking.status of
     DFRFSTicketBooking.NEW -> buildFRFSTicketBookingStatusAPIRes booking Nothing
@@ -235,7 +241,7 @@ getFrfsBookingStatus (mbPersonId, merchantId_) bookingId = do
     DFRFSTicketBooking.CONFIRMING -> do
       buildFRFSTicketBookingStatusAPIRes booking paymentSuccess
     DFRFSTicketBooking.CONFIRMED -> do
-      callBPPStatus booking bapConfig
+      callBPPStatus booking bapConfig merchantOperatingCity.city
       buildFRFSTicketBookingStatusAPIRes booking paymentSuccess
     DFRFSTicketBooking.APPROVED -> do
       paymentBooking <- B.runInReplica $ QFRFSTicketBookingPayment.findNewTBPByBookingId bookingId >>= fromMaybeM (InvalidRequest "Payment booking not found for approved TicketBookingId")
@@ -286,7 +292,7 @@ getFrfsBookingStatus (mbPersonId, merchantId_) bookingId = do
                 providerUrl <- booking.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
                 let mRiderName = person.firstName <&> (\fName -> person.lastName & maybe fName (\lName -> fName <> " " <> lName))
                 mRiderNumber <- mapM decrypt person.mobileNumber
-                bknConfirmReq <- ACL.buildConfirmReq (mRiderName, mRiderNumber) updatedBooking bapConfig txnId.getId Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl}
+                bknConfirmReq <- ACL.buildConfirmReq (mRiderName, mRiderNumber) updatedBooking bapConfig txnId.getId Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl} merchantOperatingCity.city
                 logDebug $ "FRFS SearchReq " <> (encodeToText bknConfirmReq)
                 void $ CallBPP.confirm providerUrl bknConfirmReq
               buildFRFSTicketBookingStatusAPIRes updatedBooking paymentSuccess
@@ -351,11 +357,11 @@ getFrfsBookingStatus (mbPersonId, merchantId_) bookingId = do
         [transaction] -> return transaction.id
         _ -> throwError $ InvalidRequest "Multiple successful transactions found"
 
-callBPPStatus :: DFRFSTicketBooking.FRFSTicketBooking -> BecknConfig -> Environment.Flow ()
-callBPPStatus booking bapConfig = do
+callBPPStatus :: DFRFSTicketBooking.FRFSTicketBooking -> BecknConfig -> Context.City -> Environment.Flow ()
+callBPPStatus booking bapConfig city = do
   fork "FRFS Status Req" $ do
     providerUrl <- booking.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
-    bknStatusReq <- ACL.buildStatusReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl}
+    bknStatusReq <- ACL.buildStatusReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl} city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknStatusReq)
     void $ CallBPP.status providerUrl bknStatusReq
 

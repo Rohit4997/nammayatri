@@ -24,6 +24,7 @@ import qualified Domain.Types.FRFSTicket as Ticket
 import qualified Domain.Types.FRFSTicketBooking as Booking
 import qualified Domain.Types.FRFSTicketBooking as DFRFSTicketBooking
 import Domain.Types.Merchant as Merchant
+import qualified Domain.Types.MerchantOperatingCity as DMOC
 import Environment
 import Kernel.Beam.Functions
 import Kernel.External.Encryption
@@ -34,6 +35,7 @@ import Kernel.Utils.Common
 import qualified SharedLogic.CallFRFSBPP as CallBPP
 import Storage.Beam.Payment ()
 import qualified Storage.CachedQueries.Merchant as QMerch
+import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.Queries.BecknConfig as QBC
 import qualified Storage.Queries.FRFSQuote as QFRFSQuote
 import qualified Storage.Queries.FRFSRecon as QRecon
@@ -157,6 +159,16 @@ callBPPCancel :: DFRFSTicketBooking.FRFSTicketBooking -> BecknConfig -> Environm
 callBPPCancel booking bapConfig = do
   fork "FRFS Cancel Req" $ do
     providerUrl <- booking.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
-    bknCancelReq <- ACL.buildCancelReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl}
+    merchantOperatingCity <- getMerchantOperatingCityFromBooking booking
+    bknCancelReq <- ACL.buildCancelReq booking bapConfig Utils.BppData {bppId = booking.bppSubscriberId, bppUri = booking.bppSubscriberUrl} merchantOperatingCity.city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknCancelReq)
     void $ CallBPP.cancel providerUrl bknCancelReq
+
+getMerchantOperatingCityFromBooking :: DFRFSTicketBooking.FRFSTicketBooking -> Environment.Flow DMOC.MerchantOperatingCity
+getMerchantOperatingCityFromBooking tBooking = do
+  moCityId <- case tBooking.merchantOperatingCityId of
+    Nothing -> do
+      station <- QStation.findById tBooking.fromStationId >>= fromMaybeM (InternalError $ "Station with id - " <> show tBooking.fromStationId <> " not found.")
+      return station.merchantOperatingCityId
+    Just moCityId -> return moCityId
+  CQMOC.findById moCityId >>= fromMaybeM (MerchantOperatingCityNotFound $ "merchantOperatingCityId- " <> show moCityId)
