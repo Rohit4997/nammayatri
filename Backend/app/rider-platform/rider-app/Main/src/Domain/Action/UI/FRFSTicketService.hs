@@ -35,6 +35,8 @@ import Kernel.External.Payment.Interface
 import qualified Kernel.External.Payment.Interface.Types as Payment
 import Kernel.Prelude
 import qualified Kernel.Prelude
+import Kernel.Types.Beckn.City
+import Kernel.Types.Error (MerchantError (MerchantOperatingCityNotFound))
 import Kernel.Types.Id
 import Kernel.Utils.Common
 import Kernel.Utils.Error.BaseError.HTTPError.BecknAPIError
@@ -49,6 +51,7 @@ import qualified SharedLogic.CallFRFSBPP as CallBPP
 import Storage.Beam.Payment ()
 import qualified Storage.CachedQueries.Merchant as CQM
 import qualified Storage.CachedQueries.Merchant as QMerc
+import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.Queries.BecknConfig as QBC
 import qualified Storage.Queries.BookingCancellationReason as QBCR
 import qualified Storage.Queries.FRFSQuote as QFRFSQuote
@@ -64,20 +67,24 @@ import Tools.Auth
 import Tools.Error
 import qualified Tools.Payment as Payment
 
-getFrfsStations :: (Kernel.Prelude.Maybe (Kernel.Types.Id.Id Domain.Types.Person.Person), Kernel.Types.Id.Id Domain.Types.Merchant.Merchant) -> Station.FRFSVehicleType -> Environment.Flow [API.Types.UI.FRFSTicketService.FRFSStationAPI]
-getFrfsStations _ vehicleType_ = do
-  stations <- B.runInReplica $ QS.getTicketPlacesByVehicleType vehicleType_
-  return $
-    map
-      ( \Station.Station {..} ->
-          FRFSTicketService.FRFSStationAPI
-            { color = Nothing,
-              stationType = Nothing,
-              sequenceNum = Nothing,
-              ..
-            }
-      )
-      stations
+getFrfsStations :: (Kernel.Prelude.Maybe (Kernel.Types.Id.Id Domain.Types.Person.Person), Kernel.Types.Id.Id Domain.Types.Merchant.Merchant) -> Kernel.Prelude.Maybe City -> Station.FRFSVehicleType -> Environment.Flow [API.Types.UI.FRFSTicketService.FRFSStationAPI]
+getFrfsStations (_personId, mId) mbCity vehicleType_ = do
+  case mbCity of
+    Nothing -> return []
+    Just city -> do
+      merchantOpCity <- CQMOC.findByMerchantIdAndCity mId city >>= fromMaybeM (MerchantOperatingCityNotFound $ "merchant-Id-" <> mId.getId <> "-city-" <> show city)
+      stations <- B.runInReplica $ QS.getTicketPlacesByVehicleTypeAndMOCityId vehicleType_ merchantOpCity.id
+      return $
+        map
+          ( \Station.Station {..} ->
+              FRFSTicketService.FRFSStationAPI
+                { color = Nothing,
+                  stationType = Nothing,
+                  sequenceNum = Nothing,
+                  ..
+                }
+          )
+          stations
 
 postFrfsSearch :: (Kernel.Prelude.Maybe (Kernel.Types.Id.Id Domain.Types.Person.Person), Kernel.Types.Id.Id Domain.Types.Merchant.Merchant) -> Station.FRFSVehicleType -> API.Types.UI.FRFSTicketService.FRFSSearchAPIReq -> Environment.Flow API.Types.UI.FRFSTicketService.FRFSSearchAPIRes
 postFrfsSearch (mbPersonId, merchantId) vehicleType_ FRFSSearchAPIReq {..} = do
@@ -95,7 +102,7 @@ postFrfsSearch (mbPersonId, merchantId) vehicleType_ FRFSSearchAPIReq {..} = do
           { id = searchReqId,
             vehicleType = vehicleType_,
             merchantId = Just merchantId,
-            merchantOperatingCityId = Nothing,
+            merchantOperatingCityId = Just fromStation.merchantOperatingCityId,
             createdAt = now,
             updatedAt = now,
             fromStationId = fromStation.id,
