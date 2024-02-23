@@ -560,6 +560,8 @@ library
     , extra
     , filepath
     , geohash ==1.0.1
+    , hgeometry
+    , hgeometry-combinatorial
     , http-media
     , http-types
     , lens
@@ -674,6 +676,8 @@ executable rider-app-exe
     , extra
     , filepath
     , geohash ==1.0.1
+    , hgeometry
+    , hgeometry-combinatorial
     , http-media
     , http-types
     , lens

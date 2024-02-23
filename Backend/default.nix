@@ -51,6 +51,11 @@
         };
         base32.jailbreak = true;
         amazonka-core.check = false;
+        vector-circular.broken = false;
+        vector-circular = {
+          jailbreak = true;
+          check = false;
+        };
       };
     };
 
