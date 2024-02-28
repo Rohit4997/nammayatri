@@ -582,7 +582,7 @@ homeScreenFlow = do
         myProfileScreenFlow
     GO_TO_FIND_ESTIMATES updatedState -> do
       if updatedState.data.source == getString STR.CURRENT_LOCATION then do
-        PlaceName address <- getPlaceName updatedState.props.sourceLat updatedState.props.sourceLong HomeScreenData.dummyLocation
+        PlaceName address <- getPlaceName updatedState.props.sourceLat updatedState.props.sourceLong HomeScreenData.dummyLocation 
         modifyScreenState $ HomeScreenStateType (\homeScreen -> updatedState{ data{ source = address.formattedAddress, sourceAddress = encodeAddress address.formattedAddress [] Nothing updatedState.props.sourceLat updatedState.props.sourceLong } })
       else
         pure unit
@@ -1094,6 +1094,23 @@ homeScreenFlow = do
                                                   }) srcSpecialLocation.gates
             if (sourceServiceabilityResp.serviceable ) then do
               let cityName = getCityNameFromCode sourceServiceabilityResp.city
+              (GlobalState currentState) <- getState
+              geocoderStatus <- checkGeocoder currentState.homeScreen.props.sourceLat currentState.homeScreen.props.sourceLong HomeScreenData.dummyLocation
+              if geocoderStatus then do
+                PlaceName address <- getPlaceName currentState.homeScreen.props.sourceLat currentState.homeScreen.props.sourceLong HomeScreenData.dummyLocation 
+                modifyScreenState $ HomeScreenStateType 
+                  (\homeScreen -> 
+                    homeScreen
+                      { data
+                          { source = address.formattedAddress 
+                          , sourceAddress = encodeAddress address.formattedAddress [] Nothing currentState.homeScreen.props.sourceLat currentState.homeScreen.props.sourceLong 
+                          }
+                      , props
+                          { isSrcServiceable = true
+                          }
+                      }
+                  )
+              else pure unit
               void $ pure $ setCleverTapUserProp [{key : "Customer Location", value : unsafeToForeign $ show cityName}]
               setValueToLocalStore CUSTOMER_LOCATION $ show cityName
               modifyScreenState $ HomeScreenStateType 
@@ -1145,7 +1162,6 @@ homeScreenFlow = do
             { locateOnMapLocation
               { sourceLat = sourceLat
               , sourceLng = sourceLong
-              , source = getString STR.CURRENT_LOCATION
               }
             , sourceLat = sourceLat
             , sourceLong = sourceLong
@@ -1217,7 +1233,7 @@ homeScreenFlow = do
         (GlobalState globalState) <- getState
         let state = globalState.homeScreen
         if isMoreThan20Meters || cachedLocation == "" then do
-          PlaceName placeDetails <- getPlaceName lat lon gateAddress
+          PlaceName placeDetails <- getPlaceName lat lon gateAddress 
           let currentLocationItem = getCurrentLocationItem placeDetails state lat lon
           void $ liftFlowBT $ logEvent logField_ "ny_user_placename_api_lom_onDrag"
           modifyScreenState $ HomeScreenStateType (\homeScreen ->
@@ -1283,7 +1299,7 @@ homeScreenFlow = do
               }
             })
         if isMoreThan20Meters then do
-          PlaceName address <- getPlaceName lat lon gateAddress
+          PlaceName address <- getPlaceName lat lon gateAddress 
           void $ liftFlowBT $ logEvent logField_ "ny_user_placename_api_cpu_onDrag"
           modifyScreenState $ HomeScreenStateType (\homeScreen ->
           homeScreen {
@@ -2246,7 +2262,7 @@ addNewAddressScreenFlow input = do
         liftFlowBT $ runEffectFn1 locateOnMap locateOnMapConfig { goToCurrentLocation = false, lat = lat, lon = lon, geoJson = (fromMaybe "" sourceServiceabilityResp.geoJson), points = pickUpPoints, zoomLevel = zoomLevel, labelId = getNewIDWithTag "AddAddressPin"}
         addNewAddressScreenFlow ""
       else do
-        PlaceName address <- getPlaceName lat lon gateAddress
+        PlaceName address <- getPlaceName lat lon gateAddress 
         modifyScreenState $ AddNewAddressScreenStateType (\addNewAddressScreen -> addNewAddressScreen{  data  { locSelectedFromMap = address.formattedAddress
                                                                                                               , latSelectedFromMap = lat
                                                                                                               , lonSelectedFromMap = lon
@@ -2681,6 +2697,19 @@ getPlaceCoordinates address =
   
 isAddressFieldsNothing :: Address -> Boolean
 isAddressFieldsNothing address = all isNothing [address.area, address.state, address.country, address.building, address.door, address.street, address.city, address.areaCode, address.ward, address.placeId]
+  
+checkGeocoder :: Number -> Number -> Location -> FlowBT String Boolean
+checkGeocoder lat long location = do
+  case location.address of
+    Just address -> do
+      pure true
+    Nothing -> do
+      let address = runFn2 getLocationNameV2 lat long
+      config <- getAppConfigFlowBT appConfig
+      if address /= "NO_LOCATION_FOUND" && config.geoCoder.enableLLtoAddress then do
+        pure true
+      else do
+        pure false
 
 getPlaceName :: Number -> Number -> Location -> FlowBT String PlaceName
 getPlaceName lat long location = do
@@ -2699,6 +2728,7 @@ getPlaceName lat long location = do
         (GetPlaceNameResp locationName) <- Remote.placeNameBT (Remote.makePlaceNameReq lat long $ EHC.getMapsLanguageFormat $ getLanguageLocale languageKey)
         liftFlowBT $ logEvent logField_ "ny_geocode_ll_address_fallback"
         pure $ (fromMaybe HomeScreenData.dummyLocationName (locationName !! 0))
+        
   where 
     mkPlaceName :: Number -> Number -> String -> Maybe AddressComponents -> PlaceName
     mkPlaceName lat long address addressComponent = 
@@ -3383,7 +3413,7 @@ searchLocationFlow = do
           pickUpPoint = filter ( \item -> (item.place == state.data.defaultGate)) pickUpPoints
           gateAddress = fromMaybe HomeScreenData.dummyLocation (head pickUpPoint)
       when (isDistMoreThanThreshold ) do  
-        PlaceName address <- getPlaceName lat lon gateAddress 
+        PlaceName address <- getPlaceName lat lon gateAddress
         let updatedAddress = {address : address.formattedAddress, lat : Just lat , lon : Just lon, placeId : Nothing, city : Just cityName ,addressComponents : encodeAddress address.formattedAddress [] Nothing lat lon , metroInfo : Nothing, stationCode : ""}
         modifyScreenState 
           $ SearchLocationScreenStateType 

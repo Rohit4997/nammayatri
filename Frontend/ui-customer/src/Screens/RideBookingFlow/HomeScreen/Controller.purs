@@ -1660,7 +1660,7 @@ eval (PrimaryButtonActionController (PrimaryButtonController.OnClick)) state = d
       HomeScreen   -> do
         _ <- pure $ performHapticFeedback unit
         let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_where_to_btn"
-        exit $ UpdateSavedLocation state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }}, data{source=(getString CURRENT_LOCATION)}}
+        exit $ UpdateSavedLocation state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }}}
       ConfirmingLocation -> do
         _ <- pure $ performHapticFeedback unit
         _ <- pure $ exitLocateOnMap ""
@@ -1678,8 +1678,10 @@ eval (PrimaryButtonActionController (PrimaryButtonController.OnClick)) state = d
 eval WhereToClick state = do
   _ <- pure $ performHapticFeedback unit
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_where_to_btn"
-      updateState = state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }, rideSearchProps{sessionId = generateSessionId unit}}, data{source=(getString CURRENT_LOCATION)}}
-  exit $ UpdateSavedLocation updateState 
+  if state.data.source == "" then
+    exit $ UpdateSavedLocation state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }, rideSearchProps{sessionId = generateSessionId unit}}, data{source=(getString CURRENT_LOCATION)}}
+  else 
+    exit $ UpdateSavedLocation state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }, rideSearchProps{sessionId = generateSessionId unit}}, data{source=state.data.source}} 
 
 eval (RideCompletedAC (RideCompletedCard.SkipButtonActionController (PrimaryButtonController.OnClick))) state = 
   case state.data.ratingViewState.issueFacedView of
@@ -1915,11 +1917,11 @@ eval ( RideCompletedAC (RideCompletedCard.IssueReportPopUpAC (CancelRidePopUp.Bu
 
 eval (PredictionClickedAction (LocationListItemController.OnClick item)) state = do
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_prediction_list_item"
-  locationSelected item false state{data{source = (getString CURRENT_LOCATION)}, props{isSource = Just false}}
+  locationSelected item false state{props{isSource = Just false}}
 
 eval (SuggestedDestinationClicked item) state = do
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_sd_list_item"
-  locationSelected item true state{data{source = (getString CURRENT_LOCATION)}, props{isSource = Just false, rideSearchProps{sessionId = generateSessionId unit}}}
+  locationSelected item true state{props{isSource = Just false, rideSearchProps{sessionId = generateSessionId unit}}}
 
 eval (PredictionClickedAction (LocationListItemController.FavClick item)) state = do
   if (length state.data.savedLocations >= 20) then do
@@ -1952,7 +1954,7 @@ eval (FavouriteLocationModelAC (FavouriteLocationModelController.FavouriteLocati
       pure $ setText (getNewIDWithTag "DestinationEditText") item.savedLocation
       exit $ LocationSelected item  false newState
 
-eval (SavedAddressClicked (LocationTagBarController.TagClick savedAddressType arrItem)) state = if not state.props.isSrcServiceable then continue state else tagClickEvent savedAddressType arrItem state{data{source = (getString CURRENT_LOCATION)}, props{isSource = Just false}}
+eval (SavedAddressClicked (LocationTagBarController.TagClick savedAddressType arrItem)) state = if not state.props.isSrcServiceable then continue state else tagClickEvent savedAddressType arrItem state{props{isSource = Just false}}
 
 eval (SearchLocationModelActionController (SearchLocationModelController.SavedAddressClicked (LocationTagBarController.TagClick savedAddressType arrItem))) state = tagClickEvent savedAddressType arrItem state
 
@@ -2041,8 +2043,8 @@ eval (SearchLocationModelActionController (SearchLocationModelController.GoBack)
 eval (SearchLocationModelActionController (SearchLocationModelController.SetCurrentLocation)) state = do
   _ <- pure $ currentPosition ""
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_currentlocation_click"
-  pure $ setText (getNewIDWithTag "SourceEditText") (getString CURRENT_LOCATION)
-  continue state{ data{source = (getString CURRENT_LOCATION)} ,props{ sourceSelectedOnMap = if (state.props.isSource == Just true) then false else state.props.sourceSelectedOnMap, searchLocationModelProps{isAutoComplete = false}}}
+  pure $ setText (getNewIDWithTag "SourceEditText") (state.data.source)
+  continue state{ props{ sourceSelectedOnMap = if (state.props.isSource == Just true) then false else state.props.sourceSelectedOnMap, searchLocationModelProps{isAutoComplete = false}}}
 
 eval (SearchLocationModelActionController (SearchLocationModelController.SetLocationOnMap)) state = do
   _ <- pure $ performHapticFeedback unit
@@ -2056,7 +2058,7 @@ eval (SearchLocationModelActionController (SearchLocationModelController.SetLoca
   _ <- pure $ removeAllPolylines ""
   _ <- pure $ unsafePerformEffect $ runEffectFn1 locateOnMap locateOnMapConfig { goToCurrentLocation = false, lat = lat, lon = lon, geoJson = state.data.polygonCoordinates, points = state.data.nearByPickUpPoints, zoomLevel = pickupZoomLevel, labelId = getNewIDWithTag "LocateOnMapPin"}
   pure $ unsafePerformEffect $ logEvent state.data.logField if state.props.isSource == Just true  then "ny_user_src_set_location_on_map" else "ny_user_dest_set_location_on_map"
-  let srcValue = if state.data.source == "" then getString CURRENT_LOCATION else state.data.source
+  let srcValue = state.data.source
   when (state.data.destination == "") $ do
     pure $ setText (getNewIDWithTag "DestinationEditText") ""
   let newState = state
@@ -2084,7 +2086,7 @@ eval (SearchLocationModelActionController (SearchLocationModelController.SetLoca
 eval (SearchLocationModelActionController (SearchLocationModelController.UpdateSource lat lng name)) state = do
   _ <- pure $ hideKeyboardOnNavigation true
   if state.props.isSource == Just true then do
-    let newState = state{data{source = (getString CURRENT_LOCATION),sourceAddress = encodeAddress name [] Nothing lat lng},props{ sourceLat= lat,  sourceLong = lng, sourcePlaceId = Nothing, searchLocationModelProps{isAutoComplete = false}}}
+    let newState = state{data{sourceAddress = encodeAddress name [] Nothing lat lng},props{ sourceLat= lat,  sourceLong = lng, sourcePlaceId = Nothing, searchLocationModelProps{isAutoComplete = false}}}
     updateAndExit newState $ LocationSelected (fromMaybe dummyListItem newState.data.selectedLocationListItem) false newState
     else do
       let newState = state{data{destination = name,destinationAddress = encodeAddress name [] Nothing lat lng},props{ destinationLat = lat,  destinationLong = lng, destinationPlaceId = Nothing}}
@@ -2847,6 +2849,7 @@ recenterCurrentLocation :: HomeScreenState -> Eval Action ScreenOutput HomeScree
 recenterCurrentLocation state = continueWithCmd state [ do
     if state.props.locateOnMap || (not state.props.locateOnMap && state.props.currentStage == ConfirmingLocation) then do
       _ <- pure $ currentPosition "NO_ZOOM"
+      _ <- addMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME)) 9.9 9.9 160 (0.5) (0.9)
       pure unit
     else do
       _ <- pure $ currentPosition ""

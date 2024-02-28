@@ -2875,7 +2875,26 @@ zoneTimerExpiredView state push =
   , gravity CENTER
   ][ PopUpModal.view (push <<< ZoneTimerExpired) (zoneTimerExpiredConfig state)]
 
-currentLocationView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
+editButtontView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
+editButtontView push state =
+  linearLayout
+  [ height WRAP_CONTENT
+  , width WRAP_CONTENT
+  , gravity CENTER_VERTICAL
+  , stroke $ "1," <> state.data.config.confirmPickUpLocationBorder
+  , cornerRadius 20.0
+  , padding (Padding 10 6 10 6)
+  , margin $ MarginHorizontal 10 0
+  ][ textView 
+      $
+      [ text $ "Edit"
+      , color Color.black800
+      , gravity CENTER_VERTICAL
+      ]  
+      <> FontStyle.body1 TypoGraphy
+  ]
+
+currentLocationView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w --to see
 currentLocationView push state =
   linearLayout
             [ width MATCH_PARENT
@@ -2901,15 +2920,16 @@ currentLocationView push state =
                 $
                   [ text state.data.source
                   , ellipsize true
-                  , singleLine true
+                  , maxLines 2
                   , accessibility ENABLE
                   , accessibilityHint $ "Pickup Location is " <>  (DS.replaceAll (DS.Pattern ",") (DS.Replacement " ") state.data.source)
                   , gravity LEFT
-                  , width MATCH_PARENT
+                  , weight 1.0
                   , padding (Padding 10 16 10 16)
                   , color Color.black800
                   ]
                 <> FontStyle.subHeading1 TypoGraphy
+              , editButtontView push state
             ]
 
 nearByPickUpPointsView :: forall w . HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
@@ -3412,7 +3432,12 @@ pickupLocationView push state =
               , textView $
                   [ height WRAP_CONTENT
                   , width WRAP_CONTENT
-                  , text $ (getString PICKUP_) <> ( if state.props.isSrcServiceable then (getString CURRENT_LOCATION) else getString NOT_SERVICEABLE)
+                  , text if state.props.isSrcServiceable then
+                          (if state.data.source /= "" then state.data.source else (getString PICKUP_ <> getString CURRENT_LOCATION))
+                         else
+                          getString APP_NOT_SERVICEABLE
+                  , maxLines 1
+                  , ellipsize true
                   , color state.data.config.homeScreen.pickupLocationTextColor
                   ] <> FontStyle.paragraphText TypoGraphy
             ]
