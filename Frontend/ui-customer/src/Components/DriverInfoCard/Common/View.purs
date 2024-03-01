@@ -234,7 +234,7 @@ ratingView config =
 getVehicleImage :: String -> String -> City -> String
 getVehicleImage variant vehicleDetail city = do
   let details = (toLower vehicleDetail)
-  fetchImage FF_ASSET $ 
+  fetchImage FF_ASSET $ spy "fetchIMage fsjdfjb" $ 
     if variant == "AUTO_RICKSHAW" then mkAutoImage city
     else
       if contains (Pattern "ambassador") details then "ic_yellow_ambassador"
