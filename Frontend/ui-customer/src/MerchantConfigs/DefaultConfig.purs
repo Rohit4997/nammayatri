@@ -339,6 +339,8 @@ config =
   , driverLocationPolling : {
     retryExpFactor : 3
   }
+  , tipDisplayDuration : 30
+  , enableTips : true
 }
 
 defaultCityConfig :: CityConfig

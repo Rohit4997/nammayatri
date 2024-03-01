@@ -21,7 +21,7 @@ import JBridge (getLayoutBounds)
 import Language.Strings (getString)
 import Language.Types (STR(..))
 import Prelude (Unit, ($), (<>), const, pure, unit, not, show, (<<<), (==), (>=), (*), (+), (<=), (&&), (/), (>), (||), (-))
-import PrestoDOM (BottomSheetState(..), Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Visibility(..), Accessiblity(..), Shadow(..), afterRender, background, clickable, color, cornerRadius, fontStyle, gravity, height, id, imageView, letterSpacing, lineHeight, linearLayout, margin, onClick, orientation, padding, scrollView, stroke, text, textSize, textView, visibility, weight, width, onAnimationEnd, disableClickFeedback, accessibility, peakHeight, halfExpandedRatio, relativeLayout, topShift, bottomShift, alignParentBottom, imageWithFallback, shadow, clipChildren, layoutGravity)
+import PrestoDOM (BottomSheetState(..), Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Visibility(..), Accessiblity(..), Shadow(..), afterRender, background, clickable, color, cornerRadius, fontStyle, gravity, height, id, imageView, letterSpacing, lineHeight, linearLayout, margin, onClick, orientation, padding, scrollView, stroke, text, textSize, textView, visibility, weight, width, onAnimationEnd, disableClickFeedback, accessibility, peakHeight, halfExpandedRatio, relativeLayout, topShift, bottomShift, alignParentBottom, imageWithFallback, shadow, clipChildren, layoutGravity, accessibilityHint, horizontalScrollView, scrollBarX, disableKeyboardAvoidance)
 import PrestoDOM.Properties (cornerRadii)
 import PrestoDOM.Types.DomAttributes (Corners(..))
 import Styles.Colors as Color
@@ -30,6 +30,7 @@ import PrestoDOM.Properties (sheetState)
 import Data.Int (toNumber,ceil)
 import MerchantConfig.Types(AppConfig(..))
 import Mobility.Prelude
+import Screens.Types (TipViewStage(..))
 
 view :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
 view push config =
@@ -88,7 +89,8 @@ view push config =
       , padding $ Padding 16 (if config.showPreferences then 16 else 0) 16 16
       , shadow $ Shadow 0.1 0.1 7.0 24.0 Color.greyBackDarkColor 0.5 
       ]
-      [ PrimaryButton.view (push <<< PrimaryButtonActionController) (primaryButtonRequestRideConfig config) ]
+      [ addTipView push config
+      , PrimaryButton.view (push <<< PrimaryButtonActionController) (primaryButtonRequestRideConfig config) ]
     ]
   where
     getPeekHeight :: Config -> Int
@@ -110,6 +112,129 @@ view push config =
       in 
         if requiredPeekHeight == 0 then 470 else requiredPeekHeight
 
+addTipView :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
+addTipView push state = 
+  linearLayout
+  [ height WRAP_CONTENT
+  , width MATCH_PARENT
+  , background Color.ivory
+  , cornerRadius 12.0
+  , padding $ Padding 20 12 20 12
+  , margin $ MarginTop 16
+  , gravity CENTER
+  , clickable true
+  , visibility $ boolToVisibility state.enableTips
+  ] $ (case state.tipViewProps.stage of 
+          DEFAULT -> [defaultTipView push state]
+          TIP_AMOUNT_SELECTED -> [selectTipView push state]
+          RETRY_SEARCH_WITH_TIP -> [tipSelectedView push state]
+          _ -> [defaultTipView push state])
+  
+defaultTipView :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
+defaultTipView push state = 
+  linearLayout
+  [ height WRAP_CONTENT
+  , width WRAP_CONTENT
+  , onClick push $ const $ AddTip
+  , clickable true
+  ][textView $ 
+    [ text $ getString A_TIP_HELPS_FIND_A_RIDE_QUICKER
+    , weight 1.0
+    , height WRAP_CONTENT
+    , color Color.black900
+    ] <> FontStyle.body1 LanguageStyle
+  , linearLayout
+    [ height MATCH_PARENT
+    , width WRAP_CONTENT
+    , gravity CENTER_VERTICAL
+    , margin $ MarginLeft 4
+    ][ textView $ 
+      [text $ getString ADD_NOW
+      , weight 1.0
+      , height MATCH_PARENT
+      , gravity CENTER_VERTICAL
+      , color Color.blue900
+      ] <> FontStyle.body20 LanguageStyle
+    ] 
+  ]
+
+tipSelectedView :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
+tipSelectedView push state = 
+  linearLayout
+  [ height WRAP_CONTENT
+  , width MATCH_PARENT
+  , gravity CENTER
+  , clickable true
+  , onClick push $ const $ ChangeTip
+  ][ textView $ 
+    [ text $ "₹" <> (show $ state.tipForDriver) <> " " <> getString TIP_ADDED
+    , color Color.black900
+    , width WRAP_CONTENT
+    , height WRAP_CONTENT
+    ] <> FontStyle.body4 LanguageStyle
+  , textView $ 
+    [ text $ getString CHANGE
+    , width WRAP_CONTENT
+    , height WRAP_CONTENT
+    , color Color.blue900
+    , margin $ MarginLeft 4
+    ] <> FontStyle.body1 LanguageStyle
+  ]
+
+selectTipView :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
+selectTipView push state = 
+  linearLayout
+  [ height WRAP_CONTENT
+  , width MATCH_PARENT
+  , gravity CENTER
+  , orientation VERTICAL
+  ][ textView $ 
+    [ text $ getString A_TIP_HELPS_FIND_A_RIDE_QUICKER
+    , color Color.black900
+    ] <> FontStyle.body1 LanguageStyle
+  , horizontalScrollView
+    [ height WRAP_CONTENT
+    , weight 1.0
+    , scrollBarX false
+    , disableKeyboardAvoidance true
+    , margin $ MarginTop 12
+    ][linearLayout
+      [ height WRAP_CONTENT
+      , width WRAP_CONTENT 
+      ]
+      ( mapWithIndex
+        ( \index item ->
+            linearLayout
+            [ height WRAP_CONTENT
+            , width MATCH_PARENT
+            , gravity CENTER
+            ][ linearLayout
+              [ width $ if index == 0 then WRAP_CONTENT else V 84
+              , height $ V 36
+              , background Color.white900
+              , margin $ MarginLeft if index == 0 then 0 else 8
+              , cornerRadius 7.0
+              , gravity CENTER
+              , padding $ if index == 0 then PaddingHorizontal 10 10 else Padding 0 0 0 0
+              , stroke $ "1," <> (if (state.tipViewProps.activeIndex == index) then Color.blue800 else Color.grey900)
+              , onClick push $ const $ TipBtnClick index (fromMaybe 100 (state.customerTipArrayWithValues !! index))
+              , accessibility ENABLE
+              , accessibilityHint $ "₹" <> show (fromMaybe 100 (state.customerTipArrayWithValues !! index)) <> " Tip"<> (if (state.tipViewProps.activeIndex == index) then " Selected" else " : Button")
+              ][textView $ 
+                [ text $ item
+                , color $ Color.black800
+                , width WRAP_CONTENT
+                , height WRAP_CONTENT
+                , lineHeight "12"
+                , accessibility DISABLE
+                ] <> FontStyle.body6 LanguageStyle
+              ]
+            ]
+        ) state.customerTipArray
+      )
+    ]
+  ]
+ 
 bottomDummyView :: forall w. (Action -> Effect Unit) -> Config -> PrestoDOM (Effect Unit) w
 bottomDummyView push config =
   linearLayout
@@ -303,7 +428,6 @@ chooseYourRideView push config isSingleEstimate =
       , height WRAP_CONTENT
       , width MATCH_PARENT
       , background Color.white900
-      , margin $ MarginTop 10
       , clickable true
       , padding $ PaddingTop if EHC.os == "IOS" then 13 else 7
       , stroke $ "1," <> Color.grey900

@@ -77,7 +77,7 @@ getEN stringKey =
         YOUR_RIDES -> "Your Rides"
         YOU_ARE_OFFLINE -> "You're Offline"
         CHECK_YOUR_INTERNET_CONNECTION_AND_TRY_AGAIN -> "Check your internet connection and try again"
-        TRY_AGAIN -> "Try again"
+        TRY_AGAIN -> "Try Again"
         THANK_YOUR_DRIVER -> "Thank your Driver!"
         HOPE_YOUR_RIDE_WAS_HASSLE_FREE -> "We hope your ride was hassle free"
         HOW_WAS_YOUR_RIDE_WITH -> "How was your ride with "
@@ -423,7 +423,7 @@ getEN stringKey =
         NO_DONT -> "No, Don’t"
         YES_CANCEL_SEARCH -> "Yes, Cancel Search"
         TRY_LOOKING_FOR_RIDES_AGAIN -> "It seems to be a very busy day. You may try looking for rides again"
-        NO_TIP -> "₹0 Tip"
+        NO_TIP -> "No Tip"
         CUSTOMER_TIP_DESCRIPTION -> "^Extra amount added by the customer to increase the chances of getting a ride."
         PLACE_CALL -> "Place Call"
         DIRECT_CALL -> "Direct Call"
@@ -1021,3 +1021,8 @@ getEN stringKey =
         MESSAGE_FROM name -> "Message from " <> name
         RIDE_CANCELLED -> "Ride Cancelled"
         TRACK_RIDE_STRING appName driverName trackLink vehicleNumber -> "👋 Hey,\n\nI am riding with " <> appName <>" Driver " <> driverName <> "! Track this ride on: " <> trackLink <> "\n\nVehicle number: " <> vehicleNumber
+        A_TIP_HELPS_FIND_A_RIDE_QUICKER -> "A tip helps find a ride quicker!"
+        TIP_ADDED -> "tip added!"
+        CONTINUE_SEARCH_WITH_NO_TIP -> "Continue Search with No Tip"
+        SEARCHING_WITH_NO_TIP -> "Searching with No Tip"
+        SEARCH_AGAIN -> "Search Again"

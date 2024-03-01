@@ -417,7 +417,7 @@ getFR stringKey =
         NO_DONT -> "Non, pas"
         YES_CANCEL_SEARCH -> "Oui, annulez la recherche"
         TRY_LOOKING_FOR_RIDES_AGAIN -> "Il semble que la journée soit très chargée. Vous pouvez essayer de chercher des manèges à nouveau"
-        NO_TIP -> "Aucun conseil"
+        NO_TIP -> "Pas de pourboire"
         CUSTOMER_TIP_DESCRIPTION -> "^ Montant supplémentaire ajouté par le client pour augmenter les chances d'obtenir un trajet."
         PLACE_CALL -> "Place Call"
         DIRECT_CALL -> "Appel direct"
@@ -1025,3 +1025,8 @@ getFR stringKey =
         MESSAGE_FROM name -> "Message de " <> name
         RIDE_CANCELLED -> "Trajet annulé"
         TRACK_RIDE_STRING appName driverName trackLink vehicleNumber -> "👋 Salut,\n\nJe suis en train de rouler avec le chauffeur " <> driverName <> " de " <> appName <> "! Suivez ce trajet sur : " <> trackLink <> "\n\nNuméro de véhicule : " <> vehicleNumber
+        A_TIP_HELPS_FIND_A_RIDE_QUICKER -> "Un conseil permet de trouver un trajet plus rapidement !"
+        TIP_ADDED -> "astuce ajoutée !"
+        CONTINUE_SEARCH_WITH_NO_TIP -> "Continuer la recherche sans pourboire"
+        SEARCHING_WITH_NO_TIP -> "Rechercher sans pourboire"
+        SEARCH_AGAIN -> "Chercher à nouveau"

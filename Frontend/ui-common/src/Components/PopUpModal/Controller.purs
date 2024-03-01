@@ -25,6 +25,7 @@ import Components.PrimaryEditText.Controller as PrimaryEditTextController
 import Helpers.Utils (fetchImage, FetchImageFrom(..))
 import Prelude ((<>))
 import Data.Maybe as Mb
+import Components.TipsView as TipsView
 
 data Action = OnButton1Click
             | OnButton2Click
@@ -32,11 +33,11 @@ data Action = OnButton1Click
             | ETextController PrimaryEditTextController.Action
             | CountDown Int String String
             | OnImageClick
-            | Tipbtnclick Int Int
             | DismissPopup
             | OptionWithHtmlClick
             | OnSecondaryTextClick
             | YoutubeVideoStatus String
+            | TipsViewActionController TipsView.Action
 
 type Config = {
     primaryText :: TextConfig,
@@ -52,6 +53,7 @@ type Config = {
     margin :: Margin,
     gravity :: Gravity,
     activeIndex :: Int,
+    isVisible :: Boolean,
     optionButtonOrientation :: String,
     buttonLayoutMargin :: Margin,
     tipLayoutMargin :: Margin,
@@ -76,7 +78,9 @@ type Config = {
     listViewArray :: Array String,
     coverMediaConfig :: CoverMediaConfig,
     timerId :: String,
-    onlyTopTitle :: Visibility
+    onlyTopTitle :: Visibility,
+    isTipEnabled :: Boolean,
+    isTipPopup :: Boolean
 }
 
 type CoverMediaConfig = {
@@ -451,7 +455,10 @@ config = {
       }
     },
     onlyTopTitle : VISIBLE,
-    timerId : ""
+    timerId : "",
+    isVisible : false,
+    isTipEnabled : true,
+    isTipPopup : false
 }
 
 

@@ -1,10 +1,12 @@
 module Components.ChooseYourRide.Controller where
 
+import Prelude (negate)
 import Data.Maybe (Maybe(..))
 import Components.ChooseVehicle.Controller as ChooseVehicleController
 import Components.PrimaryButton.Controller as PrimaryButtonController
 import ConfigProvider
 import MerchantConfig.Types
+import Screens.Types(TipViewProps, TipViewStage(..))
 
 data Action
   = NoAction
@@ -13,6 +15,9 @@ data Action
   | PreferencesDropDown
   | RadioButtonClick Boolean
   | OnIconClick Boolean
+  | TipBtnClick Int Int
+  | AddTip
+  | ChangeTip
 
 
 type Config
@@ -26,6 +31,11 @@ type Config
     , bookingPreferenceEnabled :: Boolean
     , flowWithoutOffers :: Boolean
     , enableSingleEstimate :: Boolean
+    , tipViewProps :: TipViewProps
+    , tipForDriver :: Int
+    , customerTipArray :: Array String
+    , customerTipArrayWithValues :: Array Int
+    , enableTips :: Boolean
     }
 
 config :: Config
@@ -40,4 +50,20 @@ config =
   , bookingPreferenceEnabled : false
   , flowWithoutOffers : false
   , enableSingleEstimate : false
+  , customerTipArray : []
+  , customerTipArrayWithValues : []
+  , tipViewProps : {
+      stage : DEFAULT
+    , isVisible : false
+    , onlyPrimaryText : false
+    , isprimaryButtonVisible : false
+    , primaryText : ""
+    , secondaryText : ""
+    , customerTipArray : []
+    , customerTipArrayWithValues : []
+    , activeIndex : -1
+    , primaryButtonText : ""
+    }
+  , tipForDriver : 0
+  , enableTips : true
   }

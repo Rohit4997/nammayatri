@@ -70,6 +70,8 @@ type AppConfigCustomer a =
   , cityConfig :: Array CityConfig
   , enableSingleEstimate :: Boolean
   , driverLocationPolling :: DriverLocationPollingConfig
+  , tipDisplayDuration :: Int
+  , enableTips :: Boolean
   | a
   }
 

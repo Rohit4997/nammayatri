@@ -20,6 +20,7 @@ import Components.QuoteListItem as QuoteListItemController
 import Data.Maybe (Maybe)
 import Screens.Types (TipViewProps, QuoteListItemState(..))
 import MerchantConfig.Types (AppConfig)
+import Components.TipsView as TipsView
 
 data Action = GoBack
             | NoAction
@@ -28,9 +29,10 @@ data Action = GoBack
             | HomeButtonActionController PrimaryButtonController.Action
             | TryAgainButtonActionController PrimaryButtonController.Action
             | CancelAutoAssigning
-            | TipBtnClick Int Int
             | TipViewPrimaryButtonClick PrimaryButtonController.Action
             | HidePopUp
+            | ChangeTip
+            | TipsViewActionController TipsView.Action
 
 type QuoteListModelState = {
      source :: String
@@ -45,4 +47,6 @@ type QuoteListModelState = {
   , progress :: Number
   , appConfig :: AppConfig
   , vehicleVariant :: String
+  , customerTipArray :: Array String
+  , customerTipArrayWithValues :: Array Int
 }
