@@ -1737,6 +1737,9 @@ type MetroTicketDetailsScreenState = {
 
 type MetroTicketDetailsScreenData = {
   dummyData :: String
+, bookingId :: String
+, city :: City
+, bookingUpdatedAt :: String
 , metroRoute :: Array MetroRoute
 , ticketsInfo :: Array MetroTicketInfo
 , ticketType :: String
@@ -1774,6 +1777,10 @@ type MetroTicketDetailsScreenProps = {
 , stage :: MetroTicketDetailsScreenStage
 , currentTicketIndex :: Int
 , previousScreenStage :: PreviousMetroTicketDetailsStage
+, isBookingCancellable :: Maybe Boolean
+, cancellationCharges :: Maybe Number
+, refundAmount :: Maybe Number
+, showLoader :: Boolean
 }
 
 data PreviousMetroTicketDetailsStage = MetroMyTicketsStage 
@@ -1787,7 +1794,10 @@ instance eqPreviousMetroTicketDetailsStage :: Eq PreviousMetroTicketDetailsStage
 
 data MetroTicketDetailsScreenStage = MetroTicketDetailsStage 
                                    | MetroMapStage 
-                                   | MetroRouteDetailsStage 
+                                   | MetroRouteDetailsStage
+                                   | MetroSoftCancelStatusStage
+                                   | MetroHardCancelStatusStage
+                                   | MetroBookingCancelledStage
 
 derive instance genericMetroTicketDetailsScreenStage :: Generic MetroTicketDetailsScreenStage _                                  
 instance showMetroTicketDetailsScreenStage :: Show MetroTicketDetailsScreenStage where show = genericShow
@@ -2094,10 +2104,12 @@ type MetroStation = {
   , sequenceNum :: Maybe Int
 }
 
-type MetroStationsList = {
+type MetroStations = {
+  city :: City,
   stations :: Array GetMetroStationResp,
   lastUpdatedAt :: String
 }
+
 -- ######################################### MetroTicketBookingScreenState ####################################################
 
 type MetroTicketBookingScreenState = {

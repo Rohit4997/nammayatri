@@ -77,7 +77,7 @@ import Presto.Core.Types.Language.Flow (FlowWrapper(..), getState, modifyState)
 import Screens.Types (RecentlySearchedObject,SuggestionsMap, SuggestionsData(..), HomeScreenState, AddNewAddressScreenState, LocationListItemState, PreviousCurrentLocations(..), CurrentLocationDetails, LocationItemType(..), NewContacts, Contacts, FareComponent, City(..))
 import Presto.Core.Utils.Encoding (defaultEnumDecode, defaultEnumEncode)
 import PrestoDOM.Core (terminateUI)
-import Screens.Types (AddNewAddressScreenState, Contacts, CurrentLocationDetails, FareComponent, HomeScreenState, LocationItemType(..), LocationListItemState, NewContacts, PreviousCurrentLocations, RecentlySearchedObject, Stage(..), Location, MetroStationsList)
+import Screens.Types (AddNewAddressScreenState, Contacts, CurrentLocationDetails, FareComponent, HomeScreenState, LocationItemType(..), LocationListItemState, NewContacts, PreviousCurrentLocations, RecentlySearchedObject, Stage(..), Location, MetroStations)
 import Screens.Types (RecentlySearchedObject, HomeScreenState, AddNewAddressScreenState, LocationListItemState, PreviousCurrentLocations(..), CurrentLocationDetails, LocationItemType(..), NewContacts, Contacts, FareComponent, SuggestionsMap, SuggestionsData(..),SourceGeoHash, CardType(..), LocationTagBarState, DistInfo)
 import Services.API (Prediction, SavedReqLocationAPIEntity(..))
 import Storage (KeyStore(..), getValueToLocalStore)
@@ -346,7 +346,7 @@ addToPrevCurrLoc currLoc currLocArr =
     else currLocArr
 
  --------------------------------------------------------------------------------------------------
-fetchMetroStations :: Decode MetroStationsList => String -> Flow GlobalState (Maybe MetroStationsList)
+fetchMetroStations :: Decode MetroStations => String -> Flow GlobalState (Maybe (Array MetroStations))
 fetchMetroStations objName = do
   (maybeEncodedState :: Maybe String) <- liftFlow $ fetchFromLocalStore' objName Just Nothing
   void $ pure $ spy "fetchMetroStations: maybeEncodedState" maybeEncodedState
@@ -360,16 +360,13 @@ fetchMetroStations objName = do
           pure Nothing
     Nothing -> pure Nothing
 
-getMetroStationsObjFromLocal :: String -> Flow GlobalState MetroStationsList
+getMetroStationsObjFromLocal :: String -> Flow GlobalState (Array MetroStations)
 getMetroStationsObjFromLocal _ = do
-  (metroStationsList :: Maybe MetroStationsList) <- (fetchMetroStations "METRO_STATIONS")
+  (metroStationsList :: Maybe (Array MetroStations)) <- (fetchMetroStations "METRO_STATIONS")
   case metroStationsList of
     Just stations -> pure stations
-    Nothing -> pure emptyMetroStationsList
-
-
-emptyMetroStationsList :: MetroStationsList
-emptyMetroStationsList = {stations : [],lastUpdatedAt : "" }
+    Nothing -> pure []
+    
  --------------------------------------------------------------------------------------------------
 
 checkPrediction :: LocationListItemState -> Array LocationListItemState -> Boolean
@@ -758,3 +755,10 @@ getDefaultPixelSize size =
   else let pixels = runFn1 getPixels FunctionCall
            androidDensity = (runFn1 getDeviceDefaultDensity FunctionCall) / defaultDensity
        in ceil $ (toNumber size / pixels) * androidDensity
+
+getMetroConfigFromCity :: City -> {logoImage :: String, title :: String}
+getMetroConfigFromCity city =
+  case city of
+    Kochi -> {logoImage : "ny_ic_kochi_metro", title : getString TICKETS_FOR_KOCHI_METRO}
+    Chennai -> {logoImage : "ny_ic_chennai_metro", title : getString TICKETS_FOR_CHENNAI_METRO}
+    _ -> {logoImage : "", title : ""}

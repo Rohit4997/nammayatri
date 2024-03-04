@@ -43,7 +43,7 @@ instance loggableAction :: Loggable Action where
 data Action = NoAction
             | BackPressed
             | AfterRender
-            | ActiveTicketPressed MetroTicketBookingStatus
+            | TicketPressed MetroTicketBookingStatus
             | PastTicketPressed MetroTicketBookingStatus
             | MetroBookingListRespAC (Array MetroTicketBookingStatus)
 
@@ -60,7 +60,7 @@ eval :: Action -> MetroMyTicketsScreenState -> Eval Action ScreenOutput MetroMyT
 eval (MetroBookingListRespAC bookingList) state = 
   continue $ metroTicketListApiToMyTicketsTransformer bookingList state
 
-eval (ActiveTicketPressed (MetroTicketBookingStatus ticketApiResp)) state = do 
+eval (TicketPressed (MetroTicketBookingStatus ticketApiResp)) state = do 
   exit $ GoToMetroTicketDetailsFlow ticketApiResp.bookingId
 
 eval (PastTicketPressed ticketApiResp) state = exit $ GoToMetroTicketStatusFlow ticketApiResp

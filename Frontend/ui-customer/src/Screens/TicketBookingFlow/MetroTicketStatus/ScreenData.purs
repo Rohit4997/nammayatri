@@ -46,8 +46,10 @@ dummyMetroBookingStatus :: MetroTicketBookingStatus
 dummyMetroBookingStatus = 
   MetroTicketBookingStatus {
     _type: "SingleJourney",
-    createdAt : "",
+    createdAt : Nothing,
     bookingId : "",
+    city : "",
+    updatedAt : "",
     payment : Nothing,
     price: 1,
     quantity: 2,

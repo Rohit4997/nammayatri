@@ -198,7 +198,7 @@ activeTicketView push ticketCard =
   , orientation VERTICAL
   , background Color.grey900
   , margin $ MarginBottom 16
-  , onClick push $ const $ ActiveTicketPressed ticketCard.metroTicketStatusApiResp
+  , onClick push $ const $ TicketPressed ticketCard.metroTicketStatusApiResp
   ][ 
     linearLayout [
       width MATCH_PARENT
@@ -220,7 +220,7 @@ activeTicketView push ticketCard =
           imageView [
             width $ V 41
           , height $ V 41
-          , imageWithFallback $ fetchImage FF_COMMON_ASSET "ny_ic_chennai_metro"
+          , imageWithFallback $ fetchImage FF_COMMON_ASSET (getMetroLogoImage ticketCard)
           ]
         ]
       , linearLayout [
@@ -350,6 +350,7 @@ pastTicketView push ticketCard =
         "PAYMENT_PENDING" -> getString PENDING_STR 
         "CONFIRMING" -> getString CONFIRMING_STR 
         "FAILED" -> getString FAILED_STR
+        "CANCELLED" -> getString CANCELLED
         "CONFIRMED" -> getString CONFIRMED_STR
         "EXPIRED" -> "Exipired" -- getString EXPIRED_STR
         _ -> ""
@@ -357,6 +358,7 @@ pastTicketView push ticketCard =
         "PAYMENT_PENDING" -> Color.yellow900
         "CONFIRMING" -> Color.yellow900
         "FAILED" -> Color.red900
+        "CANCELLED" -> Color.red900
         "CONFIRMED" -> Color.green900
         "EXPIRED" -> Color.black800 -- getString EXPIRED_STR
         _ -> Color.black900
@@ -364,6 +366,7 @@ pastTicketView push ticketCard =
         "PAYMENT_PENDING" -> fetchImage FF_COMMON_ASSET "ny_ic_yellow_clock"
         "CONFIRMING" -> fetchImage FF_COMMON_ASSET "ny_ic_yellow_clock"
         "FAILED" -> fetchImage FF_COMMON_ASSET "ny_ic_red_triangle_warning"
+        "CANCELLED" -> fetchImage FF_COMMON_ASSET "ny_ic_cross"
         "CONFIRMED" -> fetchImage FF_COMMON_ASSET "ny_ic_green_tick"
         "EXPIRED" -> fetchImage FF_ASSET "ny_ic_info"
         _ ->  ""
@@ -376,6 +379,7 @@ pastTicketView push ticketCard =
   , margin $ MarginBottom 16
   , background Color.grey900
   , gravity CENTER
+  , onClick push $ const $ TicketPressed ticketCard.metroTicketStatusApiResp
   ][
     linearLayout [
       width MATCH_PARENT
@@ -392,7 +396,7 @@ pastTicketView push ticketCard =
         imageView [
           width $ V 30
         , height $ V 30
-        , imageWithFallback $ fetchImage FF_COMMON_ASSET "ny_ic_chennai_metro"
+        , imageWithFallback $ fetchImage FF_COMMON_ASSET (getMetroLogoImage ticketCard)
         ]
       ]
     , linearLayout [
@@ -457,5 +461,13 @@ pastTicketView push ticketCard =
     ]
   ]
 ]
-  
+
+getMetroLogoImage :: ST.MetroTicketCardData -> String
+getMetroLogoImage ticketCard = 
+  let
+    (API.MetroTicketBookingStatus resp) = ticketCard.metroTicketStatusApiResp
+    city = getCityNameFromCode $ Just resp.city
+    config = getMetroConfigFromCity city
+  in
+    config.logoImage
  
