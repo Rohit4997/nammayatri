@@ -16,7 +16,6 @@ module API.Beckn.Track (API, handler) where
 
 import qualified Beckn.ACL.OnTrack as ACL
 import qualified Beckn.ACL.Track as ACL
-import Beckn.Core (withCallback')
 import qualified Beckn.OnDemand.Utils.Callback as Callback
 import qualified Beckn.OnDemand.Utils.Common as Utils
 import qualified Beckn.Types.Core.Taxi.API.OnTrack as OnTrack
@@ -79,25 +78,16 @@ track transporterId (SignatureAuthResult _ subscriber) reqBS = withFlowHandlerBe
   dTrackRes <- DTrack.track transporterId dTrackReq
 
   internalEndPointHashMap <- asks (.internalEndPointHashMap)
-  isBecknSpecVersion2 <- asks (.isBecknSpecVersion2)
-  if isBecknSpecVersion2
-    then do
-      logTagInfo "track APIV2 Flow" "Sending OnTrack APIV2"
-      context <- ContextV2.buildContextV2 Context.ON_TRACK Context.MOBILITY msgId txnId bapId callbackUrl bppId bppUri city country (Just "PT2M")
-      Callback.withCallback dTrackRes.transporter "TRACK" OnTrack.onTrackAPIV2 callbackUrl internalEndPointHashMap (errHandler context) $
-        -- there should be DOnTrack.onTrack, but it is empty anyway
-        pure $
-          Spec.OnTrackReq
-            { onTrackReqContext = context,
-              onTrackReqError = Nothing,
-              onTrackReqMessage = Just $ ACL.mkOnTrackMessageV2 dTrackRes
-            }
-    else do
-      logTagInfo "track API Flow" "Sending OnTrack API"
-      context <- buildTaxiContext Context.SEARCH msgId txnId bapId callbackUrl bppId bppUri city country False
-      withCallback' withShortRetry dTrackRes.transporter Context.TRACK OnTrack.onTrackAPIV1 context callbackUrl internalEndPointHashMap $
-        -- there should be DOnTrack.onTrack, but it is empty anyway
-        pure $ ACL.mkOnTrackMessage dTrackRes
+  logTagInfo "track APIV2 Flow" "Sending OnTrack APIV2"
+  context <- ContextV2.buildContextV2 Context.ON_TRACK Context.MOBILITY msgId txnId bapId callbackUrl bppId bppUri city country (Just "PT2M")
+  Callback.withCallback dTrackRes.transporter "TRACK" OnTrack.onTrackAPIV2 callbackUrl internalEndPointHashMap (errHandler context) $
+    -- there should be DOnTrack.onTrack, but it is empty anyway
+    pure $
+      Spec.OnTrackReq
+        { onTrackReqContext = context,
+          onTrackReqError = Nothing,
+          onTrackReqMessage = Just $ ACL.mkOnTrackMessageV2 dTrackRes
+        }
 
 decodeReq :: MonadFlow m => ByteString -> m (Either Track.TrackReq Track.TrackReqV2)
 decodeReq reqBS =
