@@ -105,5 +105,6 @@ dummyLocation = {
    lat : 0.0,
    lng : 0.0,
    address : Nothing,
-   city : Nothing
+   city : Nothing,
+   isSpecialPickUp : false
  }

@@ -55,7 +55,6 @@ import Data.Function.Uncurried (runFn1)
 import Data.Function.Uncurried (runFn1, runFn2)
 import Data.Int (ceil, floor, fromNumber, fromString, toNumber)
 import Data.Lens ((^.))
-import Data.Map as Map
 import Data.Number as NUM
 import Data.String as DS
 import Data.Time.Duration (Milliseconds(..))
@@ -73,7 +72,7 @@ import Font.Size as FontSize
 import Font.Style as FontStyle
 import Halogen.VDom.DOM.Prop (Prop)
 import Helpers.Utils (fetchImage, FetchImageFrom(..), decodeError, fetchAndUpdateCurrentLocation, getAssetsBaseUrl, getCurrentLocationMarker, getLocationName, getNewTrackingId, getSearchType, parseFloat, storeCallBackCustomer, didDriverMessage, getPixels, getDefaultPixels, getDeviceDefaultDensity)
-import JBridge (addMarker, animateCamera, clearChatMessages, drawRoute, enableMyLocation, firebaseLogEvent, generateSessionId, getArray, getCurrentPosition, getExtendedPath, getHeightFromPercent, getLayoutBounds, initialWebViewSetUp, isCoordOnPath, isInternetAvailable, isMockLocation, lottieAnimationConfig, removeAllPolylines, removeMarker, requestKeyboardShow, scrollOnResume, showMap, startChatListenerService, startLottieProcess, stopChatListenerService, storeCallBackMessageUpdated, storeCallBackOpenChatScreen, storeKeyBoardCallback, toast, updateRoute, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback, setMapPadding)
+import JBridge (addMarker, animateCamera, clearChatMessages, enableMyLocation, firebaseLogEvent, generateSessionId, getArray, getCurrentPosition, getExtendedPath, getHeightFromPercent, getLayoutBounds, initialWebViewSetUp, isCoordOnPath, isInternetAvailable, isMockLocation, lottieAnimationConfig, removeAllPolylines, removeMarker, requestKeyboardShow, scrollOnResume, showMap, startChatListenerService, startLottieProcess, stopChatListenerService, storeCallBackMessageUpdated, storeCallBackOpenChatScreen, storeKeyBoardCallback, toast, updateRoute, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback, setMapPadding)
 import Language.Strings (getString)
 import Language.Types (STR(..))
 import Log (printLog)

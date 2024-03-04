@@ -39,7 +39,7 @@ import PrestoDOM (Visibility(..))
 import Resources.Constants (DecodeAddress(..), decodeAddress, getValueByComponent, getWard, getVehicleCapacity, getFaresList, getKmMeter, fetchVehicleVariant, getAddressFromBooking)
 import Screens.HomeScreen.ScreenData (dummyAddress, dummyLocationName, dummySettingBar, dummyZoneType)
 import Screens.Types (DriverInfoCard, LocationListItemState, LocItemType(..), LocationItemType(..), NewContacts, Contact, VehicleVariant(..), TripDetailsScreenState, SearchResultType(..), EstimateInfo, SpecialTags, ZoneType(..), HomeScreenState(..), MyRidesScreenState(..), Trip(..), QuoteListItemState(..), City(..))
-import Services.API (AddressComponents(..), BookingLocationAPIEntity, DeleteSavedLocationReq(..), DriverOfferAPIEntity(..), EstimateAPIEntity(..), GetPlaceNameResp(..), LatLong(..), OfferRes, OfferRes(..), PlaceName(..), Prediction, QuoteAPIContents(..), QuoteAPIEntity(..), RideAPIEntity(..), RideBookingAPIDetails(..), RideBookingRes(..), SavedReqLocationAPIEntity(..), SpecialZoneQuoteAPIDetails(..), FareRange(..), LatLong(..), EstimateFares(..), RideBookingListRes(..), GetEmergContactsReq(..), GetEmergContactsResp(..), ContactDetails(..))
+import Services.API (AddressComponents(..), BookingLocationAPIEntity, DeleteSavedLocationReq(..), DriverOfferAPIEntity(..), EstimateAPIEntity(..), GetPlaceNameResp(..), LatLong(..), OfferRes, OfferRes(..), PlaceName(..), Prediction, QuoteAPIContents(..), QuoteAPIEntity(..), RideAPIEntity(..), RideBookingAPIDetails(..), RideBookingRes(..), SavedReqLocationAPIEntity(..), SpecialZoneQuoteAPIDetails(..), FareRange(..), LatLong(..), EstimateFares(..), RideBookingListRes(..), GetEmergContactsReq(..), GetEmergContactsResp(..), ContactDetails(..), GateInfoFull(..))
 import Services.Backend as Remote
 import Types.App(FlowBT,  GlobalState(..), ScreenType(..))
 import Storage ( setValueToLocalStore, getValueToLocalStore, KeyStore(..))
@@ -580,18 +580,21 @@ getSpecialTag specialTag =
   case specialTag of
     Just tag ->
       let zones = split (Pattern "_") tag
-          sourceTag = getZoneType $ zones DA.!! 0
-          destinationTag = getZoneType $ zones DA.!! 1
+          pickupZone = getZoneType $ fromMaybe "" (zones DA.!! 3)
+          sourceTag = if pickupZone == SPECIAL_PICKUP then SPECIAL_PICKUP else getZoneType $ fromMaybe "" (zones DA.!! 0)
+          destinationTag = getZoneType $ fromMaybe "" (zones DA.!! 1)
           priorityTag = if zones DA.!! 2 == Just "PriorityPickup" then sourceTag else destinationTag
       in { sourceTag : sourceTag, destinationTag : destinationTag, priorityTag : priorityTag}
     Nothing -> dummyZoneType
 
-getZoneType :: Maybe String -> ZoneType
+getZoneType :: String -> ZoneType
 getZoneType tag =
   case tag of
-    Just "SureMetro" -> METRO
-    Just "SureBlockedAreaForAutos" -> AUTO_BLOCKED
-    _                -> NOZONE
+    "SureMetro" -> METRO
+    "SureBlockedAreaForAutos" -> AUTO_BLOCKED
+    "PickupZone" -> SPECIAL_PICKUP
+    "SureShoppingMall" -> SHOPPING_MALL
+    _ -> NOZONE
 
 getTripFromRideHistory :: MyRidesScreenState -> Trip
 getTripFromRideHistory state = {
@@ -624,8 +627,6 @@ getActiveBooking = do
       Right (RideBookingListRes listResp) -> DA.head $ listResp.list
       Left _ -> Nothing
   
-
-
 getFormattedContacts :: FlowBT String (Array NewContacts)
 getFormattedContacts = do
   (GetEmergContactsResp res) <- Remote.getEmergencyContactsBT GetEmergContactsReq

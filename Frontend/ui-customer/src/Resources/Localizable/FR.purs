@@ -1025,3 +1025,9 @@ getFR stringKey =
         MESSAGE_FROM name -> "Message de " <> name
         RIDE_CANCELLED -> "Trajet annulé"
         TRACK_RIDE_STRING appName driverName trackLink vehicleNumber -> "👋 Salut,\n\nJe suis en train de rouler avec le chauffeur " <> driverName <> " de " <> appName <> "! Suivez ce trajet sur : " <> trackLink <> "\n\nNuméro de véhicule : " <> vehicleNumber
+        TRACK_ON_GOOGLE_MAP -> "Suivre sur Google Maps >"
+        SHOW_WALKING_DIRECTION -> "Afficher les directions pour marcher >"
+        SPECIAL_PICKUP_ZONE -> "Zone de ramassage spéciale"
+        SPECIAL_PICKUP_ZONE_RIDE -> "Ride en zone de ramassage spéciale"
+        WE_WILL_TRY_TO_CONNECT_YOU_WITH_DRIVER_IN_CLOSEST_PICKUP_ZONE -> "Nous essaierons de vous connecter avec un chauffeur dans la zone de ramassage spéciale la plus proche."
+        THIS_PROVIDES_YOU_AN_INSTANT_PICKUP_EXPERIENCE -> "Cela vous offre une expérience de ramassage instantanée."

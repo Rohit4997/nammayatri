@@ -245,7 +245,7 @@ initData = {
     , findingRidesAgain : false
     , routeEndPoints : Nothing
     , findingQuotesProgress : 0.0
-    , confirmLocationCategory : ""
+    , confirmLocationCategory : NOZONE
     , canSendSuggestion : true
     , sheetState : Nothing
     , currentSheetState : COLLAPSED
@@ -256,13 +256,7 @@ initData = {
     , flowWithoutOffers : true
     , showEducationalCarousel : false
     , specialZoneType : ""
-    , currentLocation : {
-        lat : 0.0,
-        lng : 0.0,
-        place : "",
-        address : Nothing,
-        city : Nothing
-      }
+    , currentLocation : dummyLocation
     , isShorterTrip : false
     , locateOnMapLocation : {
           source : ""
@@ -310,6 +304,8 @@ initData = {
         }
     , selectedEstimateHeight : 0
   , suggestedRideFlow : false
+  , locateOnMapProps : { sourceLocationName : Nothing, sourceGeoJson : Nothing, sourceGates : Nothing, isSpecialPickUpGate : false }
+  , showSpecialZoneInfoPopup : false
   }
 }
 
@@ -480,9 +476,10 @@ dummyLocationName = PlaceName {
 
 specialLocation :: SpecialLocation
 specialLocation = SpecialLocation{
-    "category" :"",
-     "gates": [],
-     "locationName" : ""
+    "category" : "",
+     "locationName" : "",
+     "gatesInfo" : [],
+     "geoJson" : Nothing
  }
 
 dummyLocation :: Location
@@ -491,7 +488,8 @@ dummyLocation = {
    lat : 0.0,
    lng : 0.0,
    address : Nothing,
-   city : Nothing
+   city : Nothing,
+   isSpecialPickUp : false
  }
 
 

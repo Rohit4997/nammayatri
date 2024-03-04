@@ -605,46 +605,20 @@ export const parseAddress = function (json) {
   return JSON.parse(json);
 };
 
-export const drawRoute = function (data) {
-  return function (style) {
-    return function (trackColor) {
-      return function (isActual) {
-        return function (sourceMarker) {
-          return function (destMarker) {
-            return function (polylineWidth) {
-              return function (type) {
-                return function (sourceName) {
-                  return function (destinationName) {
-                    return function (mapRouteConfig) {
-                      return function () {
-                        console.log("I AM HERE ------------------ IN DRAW ROUTE");
+export const drawRoute = function (data, style, trackColor, isActual, sourceMarkerConfig, destMarkerConfig, polylineWidth, type, mapRouteConfig) {
+  console.log("I AM HERE ------------------ IN DRAW ROUTE");
+  try {
+    return window.JBridge.drawRoute(JSON.stringify(data), style, trackColor, isActual, JSON.stringify(sourceMarkerConfig), JSON.stringify(destMarkerConfig), polylineWidth, type, JSON.stringify(mapRouteConfig));
+  } catch (err) {
+    console.log("error in draw route", err);
+    return window.JBridge.drawRoute(JSON.stringify(data), style, trackColor, isActual, sourceMarkerConfig.pointerIcon, destMarkerConfig.pointerIcon, polylineWidth, type, sourceMarkerConfig.primaryText, destMarkerConfig.primaryText, JSON.stringify(mapRouteConfig));
+  }
+}
 
-                        try {
-                          return window.JBridge.drawRoute(JSON.stringify(data), style, trackColor, isActual, sourceMarker, destMarker, polylineWidth, type, sourceName, destinationName, JSON.stringify(mapRouteConfig));
-                        } catch (err) {
-                          /*
-                           * This Function is deprecated on 10 Jul- 2023
-                           * Remove this function once it is not begin used.
-                           */
-                          return window.JBridge.drawRoute(JSON.stringify(data), style, trackColor, isActual, sourceMarker, destMarker, polylineWidth, type, sourceName, destinationName);
-                        }
-                      }
-                    };
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-  };
-};
-
-export const updateRouteMarker = function (data) {
+export const updateMarker = function (markerConfig) {
   return function () {
-    if (window.JBridge.updateRouteMarker) {
-      return window.JBridge.updateRouteMarker(JSON.stringify(data));
+    if (window.JBridge.updateMarker) {
+      return window.JBridge.updateMarker(JSON.stringify(markerConfig));
     }
   }
 }
@@ -1744,6 +1718,23 @@ export const showKeyboard = function (id) {
 
 export const locateOnMap = (configObj) => {
   try {
+    // TODO :: backward compatible for IOS
+    // let geoJson = JSON.parse(configObj.geoJson);
+    // let backwardCompatibleGeoJson = "";
+
+    // try {
+    //   for (let i = 0; i < geoJson.features.length; i++) {
+    //     let feature = geoJson.features[i];
+    //     if (feature.properties.name == "") {
+    //       backwardCompatibleGeoJson = feature.geometry;
+    //     }
+    //   }
+    // } catch (err) {
+    //   console.log("debug zone err ", err);
+    // }
+
+    // configObj.geoJson = JSON.stringify(backwardCompatibleGeoJson);
+
     if ( window.__OS == "IOS" || (window.__OS == "ANDROID" && methodArgumentCount("locateOnMap") == 1))
       return JBridge.locateOnMap(JSON.stringify(configObj));
     else

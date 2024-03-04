@@ -74,7 +74,7 @@ import Engineering.Helpers.LogEvent (logEvent, logEventWithTwoParams, logEventWi
 import Engineering.Helpers.Suggestions (getMessageFromKey, getSuggestionsfromKey, emChatSuggestion, chatSuggestion)
 import Foreign (unsafeToForeign)
 import Foreign.Class (encode)
-import Helpers.Utils (addToRecentSearches, getCurrentLocationMarker, getDistanceBwCordinates, getLocationName, getScreenFromStage, getSearchType, parseNewContacts, performHapticFeedback, setText, terminateApp, withinTimeRange, toStringJSON, secondsToHms, updateLocListWithDistance, getPixels, getDeviceDefaultDensity, getDefaultPixels, getAssetsBaseUrl)
+import Helpers.Utils (addToRecentSearches, getCurrentLocationMarker, getDistanceBwCordinates, getLocationName, getScreenFromStage, getSearchType, parseNewContacts, performHapticFeedback, setText, terminateApp, withinTimeRange, toStringJSON, secondsToHms, updateLocListWithDistance, getPixels, getDeviceDefaultDensity, getDefaultPixels, getAssetsBaseUrl, zoneLabelIcon)
 import JBridge (addMarker, animateCamera, currentPosition, exitLocateOnMap, firebaseLogEvent, firebaseLogEventWithParams, firebaseLogEventWithTwoParams, getCurrentPosition, hideKeyboardOnNavigation, isLocationEnabled, isLocationPermissionEnabled, locateOnMap, minimizeApp, openNavigation, openUrlInApp, removeAllPolylines, removeMarker, requestKeyboardShow, requestLocation, shareTextMessage, showDialer, toast, toggleBtnLoader, goBackPrevWebPage, stopChatListenerService, sendMessage, getCurrentLatLong, isInternetAvailable, emitJOSEvent, startLottieProcess, getSuggestionfromKey, scrollToEnd, lottieAnimationConfig, methodArgumentCount, getChatMessages, scrollViewFocus, getLayoutBounds, updateInputString, checkAndAskNotificationPermission, locateOnMapConfig, addCarouselWithVideoExists, pauseYoutubeVideo, cleverTapCustomEvent, getKeyInSharedPrefKeys, generateSessionId)
 import Language.Strings (getString)
 import Language.Types (STR(..))
@@ -131,6 +131,7 @@ import Screens.RideBookingFlow.HomeScreen.BannerConfig (getBannerConfigs, getDri
 import Components.PopupWithCheckbox.Controller as PopupWithCheckboxController
 import LocalStorage.Cache (getValueFromCache)
 import DecodeUtil (getAnyFromWindow)
+import JBridge as JB
 
 instance showAction :: Show Action where
   show _ = ""
@@ -939,6 +940,7 @@ data Action = NoAction
             | UpdateContacts (Array NewContacts)
             | UpdateChatWithEM Boolean
             | ShareRideAction PopupWithCheckboxController.Action
+            | SpecialZoneInfoTag 
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState
 eval (ChooseSingleVehicleAction (ChooseVehicleController.ShowRateCard config)) state = do
@@ -1367,6 +1369,8 @@ eval (DriverInfoCardActionController (DriverInfoCardController.CallDriver)) stat
     continue state { props { showCallPopUp = true } }
   else callDriver state $ fromMaybe "ANONYMOUS" $ state.data.config.callOptions !! 0
 
+eval (DriverInfoCardActionController (DriverInfoCardController.SpecialZoneInfoTag)) state = continue state{ props{ showSpecialZoneInfoPopup = true } }
+
 eval DirectSearch state =continue state{props{currentStage = SearchLocationModel}}
 
 eval BackPressed state = do
@@ -1466,6 +1470,7 @@ eval BackPressed state = do
                             _ <- pure $ pauseYoutubeVideo unit
                             continue state{props{showEducationalCarousel = false}}
                           else if state.data.waitTimeInfo then continue state { data {waitTimeInfo =false} }
+                          else if state.props.showSpecialZoneInfoPopup then continue state { props{ showSpecialZoneInfoPopup = false } }
                           else do
                               pure $ terminateApp state.props.currentStage true
                               continue state
@@ -1521,9 +1526,9 @@ eval (UpdateLocation key lat lon) state = do
   case key of
     "LatLon" -> do
       exit $ UpdateLocationName state{props{defaultPickUpPoint = "", rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved, destManuallyMoved = destManuallyMoved }}} latitude longitude
-    _ ->  if length (filter( \ (item) -> (item.place == key)) state.data.nearByPickUpPoints) > 0 then do
-            exit $ UpdateLocationName state{props{defaultPickUpPoint = key, rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved, destManuallyMoved = destManuallyMoved }}} latitude longitude
-          else continue state
+    _ ->  case (filter(\item -> item.place == key) state.data.nearByPickUpPoints) !! 0 of
+            Just spot -> exit $ UpdateLocationName state{props{defaultPickUpPoint = key, rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved, destManuallyMoved = destManuallyMoved}, locateOnMapProps{ isSpecialPickUpGate = spot.isSpecialPickUp }}} spot.lat spot.lng
+            Nothing -> continue state
 
 eval (UpdatePickupLocation  key lat lon) state = do
   let sourceManuallyMoved = true
@@ -1534,11 +1539,12 @@ eval (UpdatePickupLocation  key lat lon) state = do
       exit $ UpdatePickupName state{props{defaultPickUpPoint = "", rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved}}} latitude longitude
     _ -> do
       let focusedIndex = findIndex (\item -> item.place == key) state.data.nearByPickUpPoints
-      case focusedIndex of
-        Just index -> do
+          spot = (filter(\item -> item.place == key) state.data.nearByPickUpPoints) !! 0
+      case focusedIndex, spot of
+        Just index, Just spot' -> do
           _ <- pure $ scrollViewFocus (getNewIDWithTag "scrollViewParent") index
-          exit $ UpdatePickupName state{props{defaultPickUpPoint = key, rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved}}} latitude longitude
-        Nothing -> continue state
+          exit $ UpdatePickupName state{props{defaultPickUpPoint = key, rideSearchProps{ sourceManuallyMoved = sourceManuallyMoved}, locateOnMapProps{ isSpecialPickUpGate = spot'.isSpecialPickUp }}} spot'.lat spot'.lng
+        _, _ -> continue state
 
 eval (CheckBoxClick autoAssign) state = do
   _ <- pure $ performHapticFeedback unit
@@ -1794,12 +1800,8 @@ eval (SpecialZoneOTPExpiryAction seconds status timerID) state = do
     formatDigits :: Int -> String
     formatDigits time = (if time >= 10 then "" else "0") <> show time
 
-eval (DriverInfoCardActionController (DriverInfoCardController.OnNavigate)) state = do
-  void $ pure $ openNavigation state.data.driverInfoCardState.destinationLat state.data.driverInfoCardState.destinationLng "DRIVE"
-  continue state
-
-eval (DriverInfoCardActionController (DriverInfoCardController.OnNavigateToZone)) state = do
-  void $ pure $ openNavigation state.data.driverInfoCardState.sourceLat state.data.driverInfoCardState.sourceLng "WALK"
+eval (DriverInfoCardActionController (DriverInfoCardController.OnNavigate mode lat lon)) state = do
+  void $ pure $ openNavigation lat lon (show mode)
   continue state
 
 eval (DriverInfoCardActionController (DriverInfoCardController.RideSupport)) state = do
@@ -1923,7 +1925,7 @@ eval (PredictionClickedAction (LocationListItemController.OnClick item)) state =
 eval (SuggestedDestinationClicked item) state = do
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_sd_list_item"
   let _ = unsafePerformEffect $ Events.addEventData "External.OneClick.SuggestedDestinationClicked" "true"
-  locationSelected item true state{data{source = (getString CURRENT_LOCATION)}, props{isSource = Just false, rideSearchProps{sessionId = generateSessionId unit}, suggestedRideFlow = true}}
+  locationSelected item true state{data{source = (getString CURRENT_LOCATION), nearByPickUpPoints = [], polygonCoordinates = ""}, props{isSource = Just false, rideSearchProps{sessionId = generateSessionId unit}, suggestedRideFlow = true}}
 
 eval (PredictionClickedAction (LocationListItemController.FavClick item)) state = do
   if (length state.data.savedLocations >= 20) then do
@@ -2061,7 +2063,7 @@ eval (SearchLocationModelActionController (SearchLocationModelController.SetLoca
       lon = if isDestinationNotEmpty then state.props.destinationLong else state.props.sourceLong
   _ <- pure $ hideKeyboardOnNavigation true
   _ <- pure $ removeAllPolylines ""
-  _ <- pure $ unsafePerformEffect $ runEffectFn1 locateOnMap locateOnMapConfig { goToCurrentLocation = false, lat = lat, lon = lon, geoJson = state.data.polygonCoordinates, points = state.data.nearByPickUpPoints, zoomLevel = pickupZoomLevel, labelId = getNewIDWithTag "LocateOnMapPin"}
+  _ <- pure $ unsafePerformEffect $ runEffectFn1 locateOnMap locateOnMapConfig { lat = lat, lon = lon, geoJson = state.data.polygonCoordinates, points = state.data.nearByPickUpPoints, zoomLevel = pickupZoomLevel, labelId = getNewIDWithTag "LocateOnMapPin", locationName = fromMaybe "" state.props.locateOnMapProps.sourceLocationName, specialZoneMarkerConfig{ labelImage = zoneLabelIcon state.props.confirmLocationCategory }}
   pure $ unsafePerformEffect $ logEvent state.data.logField if state.props.isSource == Just true  then "ny_user_src_set_location_on_map" else "ny_user_dest_set_location_on_map"
   let srcValue = if state.data.source == "" then getString CURRENT_LOCATION else state.data.source
   when (state.data.destination == "") $ do
@@ -2372,7 +2374,8 @@ eval (NotificationListener notificationType) state = do
     "DRIVER_QUOTE_INCOMING" -> continue state
     _ -> exit $ NotificationHandler notificationType state { props { callbackInitiated = false}}
 
-eval RecenterCurrentLocation state = recenterCurrentLocation state
+eval RecenterCurrentLocation state = do
+  recenterCurrentLocation state
 
 eval (SearchLocationModelActionController (SearchLocationModelController.RecenterCurrentLocation)) state = recenterCurrentLocation state
 
@@ -2403,9 +2406,20 @@ eval (RateCardAction RateCard.GoToFareUpdate) state = continue state { data{rate
 
 eval (RateCardAction RateCard.GoToWaitingCharges) state = continue state { data{rateCard{currentRateCardType = WaitingCharges,onFirstPage = true}}}
 
-eval (RequestInfoCardAction RequestInfoCard.Close) state = continue state { props { showMultipleRideInfo = false }, data {waitTimeInfo = false }}
+eval (RequestInfoCardAction RequestInfoCard.Close) state = 
+  if state.props.showSpecialZoneInfoPopup then
+    continue state{ props{ showSpecialZoneInfoPopup = false } }
+  else
+    continue state { props { showMultipleRideInfo = false }, data {waitTimeInfo = false }}
 
-eval (RequestInfoCardAction RequestInfoCard.BackPressed) state = continue state { props { showMultipleRideInfo = false }, data {waitTimeInfo = false }}
+eval (RequestInfoCardAction RequestInfoCard.BackPressed) state = 
+  if state.props.showSpecialZoneInfoPopup then
+    continue state{ props{ showSpecialZoneInfoPopup = false } }
+  else
+    continue state { props { showMultipleRideInfo = false }, data {waitTimeInfo = false }}
+
+eval SpecialZoneInfoTag state = 
+  continue state{ props{ showSpecialZoneInfoPopup = true } }
 
 eval (RequestInfoCardAction RequestInfoCard.NoAction) state = continue state
 
@@ -2568,7 +2582,8 @@ eval (ChooseYourRideAction (ChooseYourRideController.PrimaryButtonActionControll
 eval (ChooseYourRideAction ChooseYourRideController.NoAction) state =
   continue state{ props{ defaultPickUpPoint = "" } }
 
-eval MapReadyAction state = continueWithCmd state [ do
+eval MapReadyAction state = do
+  continueWithCmd state [ do
       permissionConditionA <- isLocationPermissionEnabled unit
       permissionConditionB <- isLocationEnabled unit
       internetCondition <- isInternetAvailable unit
@@ -2588,6 +2603,9 @@ eval (ChooseYourRideAction (ChooseYourRideController.OnIconClick autoAssign)) st
 
 eval (ChooseYourRideAction ChooseYourRideController.PreferencesDropDown) state = do
   continue state { data { showPreferences = not state.data.showPreferences}}
+
+eval (ChooseYourRideAction ChooseYourRideController.SpecialZoneInfoTag) state = do
+  continue state{ props{ showSpecialZoneInfoPopup = true } }
 
 eval CheckAndAskNotificationPermission state = do 
   _ <- pure $ checkAndAskNotificationPermission false
@@ -2684,6 +2702,7 @@ constructLatLong lat lng _ =
   , place: ""
   , address: Nothing
   , city : Nothing
+  , isSpecialPickUp : false
   }
 
 addItemToFeedbackList :: Array String -> String -> Array String
@@ -2997,6 +3016,7 @@ estimatesListFlow estimates state = do
       , props
         { currentStage = SettingPrice
         , estimateId = estimatesInfo.defaultQuote.id
+        , zoneType = estimatesInfo.zoneType
         }
       }
   else do

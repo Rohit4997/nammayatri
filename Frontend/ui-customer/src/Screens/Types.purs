@@ -742,7 +742,7 @@ type HomeScreenStateProps =
   , findingRidesAgain :: Boolean
   , routeEndPoints :: Maybe RouteEndPoints
   , findingQuotesProgress :: Number
-  , confirmLocationCategory :: String
+  , confirmLocationCategory :: ZoneType
   , zoneTimerExpired :: Boolean
   , canSendSuggestion :: Boolean
   , sheetState :: Maybe BottomSheetState
@@ -786,6 +786,8 @@ type HomeScreenStateProps =
   , rideSearchProps :: RideSearchProps
   , selectedEstimateHeight :: Int
   , suggestedRideFlow :: Boolean
+  , locateOnMapProps :: LocateOnMapProps
+  , showSpecialZoneInfoPopup :: Boolean
   }
 
 data BottomNavBarIcon = TICKETING | MOBILITY
@@ -1108,7 +1110,8 @@ type Location = {
   lat :: Number,
   lng :: Number,
   address :: Maybe String,
-  city :: Maybe String
+  city :: Maybe String,
+  isSpecialPickUp :: Boolean
 }
 
 type DriverInfoCard =
@@ -1449,6 +1452,10 @@ newtype FlowStatusData = FlowStatusData {
   , destination :: Location
   , sourceAddress :: Address
   , destinationAddress :: Address
+  , sourceLabelIcon :: Maybe String
+  , destLabelIcon :: Maybe String
+  , sourceGeoJson :: Maybe String
+  , sourceGates :: Maybe (Array Location)
 }
 
 derive instance genericFlowStatusData :: Generic FlowStatusData _
@@ -1457,12 +1464,14 @@ instance encodeFlowStatusData :: Encode FlowStatusData where encode = defaultEnc
 instance decodeFlowStatusData :: Decode FlowStatusData where decode = defaultDecode
 
 data ZoneType = METRO
+              | SHOPPING_MALL
               | HOSPITAL
               | AIRPORT
               | SCHOOL
               | RAILWAY
               | NOZONE
               | AUTO_BLOCKED
+              | SPECIAL_PICKUP
 
 derive instance genericZoneType :: Generic ZoneType _
 instance showZoneType :: Show ZoneType where show = genericShow
@@ -1893,7 +1902,7 @@ type SearchLocationScreenData =
     defaultGate :: String,
     nearByGates :: Array Location,
     specialZoneCoordinates :: String,
-    confirmLocCategory :: String,
+    confirmLocCategory :: ZoneType,
     metroStations :: Array Station,
     updatedMetroStations :: Array Station
   }
@@ -2191,3 +2200,15 @@ instance eqLocationType :: Eq LocationType where eq = genericEq
 type GlobalFlowCache = {
   savedLocations :: Maybe SavedLocationsListRes
 }
+
+type LocateOnMapProps = {
+    sourceLocationName :: Maybe String
+  , sourceGeoJson :: Maybe String
+  , sourceGates :: Maybe (Array Location)
+  , isSpecialPickUpGate :: Boolean
+}
+
+data NavigationMode = WALK | DRIVE
+
+derive instance genericNavigationMode :: Generic NavigationMode _
+instance showNavigationMode :: Show NavigationMode where show = genericShow

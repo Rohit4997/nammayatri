@@ -1622,14 +1622,14 @@ newtype ServiceabilityReq = ServiceabilityReq
 
 newtype ServiceabilityRes = ServiceabilityRes
   { serviceable :: Boolean,
-    geoJson :: Maybe String,
+    -- geoJson :: Maybe String, :: to be deprecated
     specialLocation :: Maybe SpecialLocation,
     city :: Maybe String 
   }
 
 newtype ServiceabilityResDestination = ServiceabilityResDestination
   { serviceable :: Boolean,
-    geoJson :: Maybe String,
+    -- geoJson :: Maybe String, :: to be deprecated
     specialLocation :: Maybe SpecialLocation,
     city :: Maybe String
   }
@@ -1637,14 +1637,26 @@ newtype ServiceabilityResDestination = ServiceabilityResDestination
 newtype SpecialLocation = SpecialLocation
   {
     category :: String,
-    gates :: Array GatesInfo,
-    locationName :: String
+    -- gates :: Array GatesInfo, :: to be deprecated
+    gatesInfo :: Array GateInfoFull,
+    locationName :: String,
+    geoJson :: Maybe String
   }
 
 newtype GatesInfo = GatesInfo {
   name :: String,
   point :: LatLong,
   address :: Maybe String
+}
+
+newtype GateInfoFull = GateInfoFull {
+  address :: Maybe String,
+  canQueueUpOnGate :: Maybe Boolean,
+  defaultDriverExtra :: Maybe Int,
+  geoJson :: Maybe String,
+  id :: String,
+  name :: String,
+  point :: LatLong
 }
 
 instance makeOriginServiceabilityReq :: RestEndpoint ServiceabilityReq ServiceabilityRes where
@@ -1698,6 +1710,13 @@ instance standardEncodeGatesInfo :: StandardEncode GatesInfo where standardEncod
 instance showGatesInfo :: Show GatesInfo where show = genericShow
 instance decodeGatesInfo :: Decode GatesInfo where decode = defaultDecode
 instance encodeGatesInfo :: Encode GatesInfo where encode = defaultEncode
+
+derive instance genericGateInfoFull :: Generic GateInfoFull _
+derive instance newtypeGateInfoFull:: Newtype GateInfoFull _
+instance standardEncodeGateInfoFull :: StandardEncode GateInfoFull where standardEncode (GateInfoFull req) = standardEncode req
+instance showGateInfoFull :: Show GateInfoFull where show = genericShow
+instance decodeGateInfoFull :: Decode GateInfoFull where decode = defaultDecode
+instance encodeGateInfoFull :: Encode GateInfoFull where encode = defaultEncode
 
 
 ----------------------------------------------------------------------- flowStatus api -------------------------------------------------------------------

@@ -50,6 +50,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
@@ -64,7 +65,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -124,6 +127,8 @@ public class LocationUpdateService extends Service {
     static JSONObject androidVersion;
 
     private long lastCallTime = 0;
+    private String currentZoneGeoHash = null;
+    private boolean isSpecialpickup = false;
 
     enum LocationSource {
         CurrentLocation,
@@ -875,6 +880,7 @@ public class LocationUpdateService extends Service {
                     updateStorage("LAST_KNOWN_LAT", String.valueOf(lastLatitudeValue));
                     updateStorage("LAST_KNOWN_LON", String.valueOf(lastLongitudeValue));
                     callDriverCurrentLocationAPI(lastLocation, thisLocationTimeStamp, "fused_location_callback", LocationSource.LastLocation.toString(), TriggerFunction.GoogleCallback.toString());
+                    checkNearByPickupZone(lastLocation);
                     prevLat = lastLatitudeValue;
                     prevLon = lastLongitudeValue;
                 }
@@ -941,9 +947,11 @@ public class LocationUpdateService extends Service {
                                         updateStorage("LAST_KNOWN_LAT", String.valueOf(lastLatitudeValue));
                                         updateStorage("LAST_KNOWN_LON", String.valueOf(lastLongitudeValue));
                                         callDriverCurrentLocationAPI(location, thisLocationTimeStamp, "timer_task", LocationSource.CurrentLocation.toString(), TriggerFunction.TimerTask.toString());
+                                        checkNearByPickupZone(location);
                                     } else {
                                         System.out.println("LOCATION_UPDATE: CURRENT LOCATION IS NULL");
                                         callDriverCurrentLocationAPI(location, sdf.format(new Date()), "timer_task_null_location", LocationSource.CurrentLocation.toString(), TriggerFunction.TimerTask.toString());
+                                        checkNearByPickupZone(location);
                                     }
                                 })
                                 .addOnFailureListener(Throwable::printStackTrace);
@@ -961,6 +969,7 @@ public class LocationUpdateService extends Service {
                                         Date locTime = new Date(locTimeMilliSeconds);
                                         String thisLocationTimeStamp = sdf.format(locTime);
                                         callDriverCurrentLocationAPI(location, thisLocationTimeStamp, "COMING FROM TIMER", LocationSource.LastLocation.toString(), TriggerFunction.TimerTask.toString());
+                                        checkNearByPickupZone(location);
                                     }
                                 })
                                 .addOnFailureListener(Throwable::printStackTrace);
@@ -1013,4 +1022,61 @@ public class LocationUpdateService extends Service {
         editor.apply();
     }
 
+     private void checkNearByPickupZone(Location location) {
+        if (location != null) {
+            try {
+                SharedPreferences sharedPref = context.getSharedPreferences(context.getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+                String stringifiedZones = sharedPref.getString("SPECIAL_LOCATION_LIST", null);
+                JSONArray zones = new JSONArray(stringifiedZones);
+                GeoHash geoHash = new GeoHash();
+                String currentGeoHash = geoHash.encode(location.getLatitude(), location.getLongitude(), 7);
+                ArrayList<String> nearbyGeohashes = geoHash.nearbyGeohashes(currentGeoHash, 150.0);
+                nearbyGeohashes.add(currentGeoHash);
+
+                currentZoneGeoHash = currentZoneGeoHash == null ? currentGeoHash : currentZoneGeoHash;
+                boolean nearBySpecialPickup = false;
+                for (int i=0; i<zones.length(); i++) {
+                    JSONArray zoneMap = (JSONArray) zones.get(i);
+                    String zoneGeoHash = (String) zoneMap.get(0);
+                    nearBySpecialPickup = nearbyGeohashes.contains(zoneGeoHash);
+                    if (!currentZoneGeoHash.equals(zoneGeoHash) && nearBySpecialPickup) {
+                        isSpecialpickup = true;
+                        showWidget(true);
+                        currentZoneGeoHash = zoneGeoHash;
+                    }
+                    break;
+                }
+                if (!nearBySpecialPickup && isSpecialpickup) {
+                    currentZoneGeoHash = currentGeoHash;
+                    isSpecialpickup = false;
+                    showWidget(false);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+     }
+
+
+    private void showWidget(boolean isSpecialPickup) {
+        try {
+            SharedPreferences sharedPreferences = context.getSharedPreferences(context.getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+            String activityStatus = sharedPreferences.getString("ACTIVITY_STATUS", "null");
+            Intent widgetService = new Intent(getApplicationContext(), WidgetService.class);
+            if (isSpecialPickup) {
+                if ((activityStatus.equals("onPause") || activityStatus.equals("onDestroy"))) {
+                    widgetService.putExtra("showNearbySpecialPickup", true);
+                    widgetService.putExtra("specialPickupMessage", getString(R.string.you_are_near_a_special_pickup_zone));
+                }
+            } else {
+                widgetService.putExtra("showNearbySpecialPickup", false);
+            }
+            startService(widgetService);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
+

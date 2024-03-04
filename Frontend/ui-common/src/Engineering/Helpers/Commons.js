@@ -538,3 +538,7 @@ export const isTrue = function (a) {
   const bool = true;
   return a.toString() === bool.toString();
 }
+
+export const toStringJSON = function (attr) {
+  return JSON.stringify(attr);
+};

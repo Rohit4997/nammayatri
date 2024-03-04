@@ -445,6 +445,7 @@ constructLatLong lat lng _ =
   , place : ""
   , address : Nothing
   , city : Nothing
+  , isSpecialPickUp : false
   }
 
 calculateDistance ::Array LocationListItemState -> String -> Number -> Number -> Array DistInfo

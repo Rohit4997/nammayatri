@@ -1273,3 +1273,11 @@ getKN stringKey =
         EXIT_THE_QUIZ -> "ರಸಪ್ರಶ್ನೆಯಿಂದ ನಿರ್ಗಮಿಸುವುದೇ?"
         EXIT_AND_START_AGAIN_LATER -> "ನಿರ್ಗಮಿಸಿ ಮತ್ತು ನಂತರ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "ನೀವು ಓದಬಹುದಾದ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        SPECIAL_PICKUP_ZONE_NEARBY -> "ಹತ್ತಿರದ ವಿಶೇಷ ಪಿಕಪ್ ಜೋನ್"
+        ZONE_PICKUP -> "ಪಿಕಪ್ ಜೋನ್"
+        SPECIAL_PICKUP_ZONE_RIDE -> "ವಿಶೇಷ ಪಿಕಪ್ ಜೋನ್ ಸವಾರಿ"
+        SPECIAL_PICKUP_ZONE -> "ವಿಶೇಷ ಪಿಕಪ್ ಜೋನ್"
+        SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ವಿಶೇಷ ಜೋನ್ ನಲ್ಲಿ, ನೀವು ಹತ್ತಿರದ ಗ್ರಾಹಕರಿಂದ ಆದ್ಯತೆಯ ರೈಡ್ ವಿನಂತಿಗಳನ್ನು ಪಡೆಯುತ್ತೀರಿ!”"
+        INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ವಿಶೇಷ ಪಿಕಪ್ ವಲಯದಲ್ಲಿ ಆದ್ಯತೆಯ ರೈಡ್ ವಿನಂತಿಗಳನ್ನು ಪಡೆಯಿರಿ"
+        SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "ಆದ್ಯತೆಯ ಸವಾರಿಗಳಿಗಾಗಿ ಹಸಿರು ಪ್ರದೇಶವನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        
