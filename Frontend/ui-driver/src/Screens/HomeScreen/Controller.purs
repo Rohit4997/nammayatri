@@ -589,10 +589,10 @@ eval (CallBackImageUpload image imageName imagePath) state = do
    
     newState <- if state.props.endRideOdometerReadingModal then do
                   void $ pure $ setValueToLocalStore RIDE_END_ODOMETER image
-                  pure state{props{endRideOdometerImage =image, odometerImageUploading = false}} 
+                  pure state{props{endRideOdometerImage = Just image, odometerImageUploading = false}} 
                 else do 
                   void $ pure $ setValueToLocalStore RIDE_START_ODOMETER image 
-                  pure state{props{startRideOdometerImage =image,currentStage= ST.RideStarted,odometerImageUploading = false}}
+                  pure state{props{startRideOdometerImage = Just image,currentStage= ST.RideStarted,odometerImageUploading = false}}
     
     continueWithCmd newState [do
         void $  runEffectFn3 uploadMultiPartData imagePath (EP.uploadOdometerImage "") "Image"
@@ -609,20 +609,6 @@ eval (UploadMultiPartDataCallback fileType fileId) state = do
 
 eval (CallBackNewStop stopStatus) state = do
   _ <- pure $ printLog "new Stop Status " stopStatus
-  -- let action = continueWithCmd state [ do
-  --       void $ launchAff $ flowRunner defaultGlobalState $ do
-  --         push <- liftFlow $ getPushFn Nothing "HomeScreen"
-  --         activeRideResponse <- Remote.getRideHistoryReq "1" "0" "true" "null" "null"
-  --         case activeRideResponse of
-  --           Right (GetRidesHistoryResp rideList) -> do
-  --             case (rideList.list Array.!! 0) of
-  --               Just (RidesInfo {nextStopLocation,lastStopLocation}) -> do
-  --                 currentLocation <- doAff do liftEffect JB.getCurrentLatLong 
-  --                 liftFlow $ push $ NewStopAdded currentLocation nextStopLocation lastStopLocation
-  --               Nothing -> pure unit
-  --           Left err -> pure unit
-  --         pure unit
-  --       pure NoAction]
   case stopStatus of
     "ADD_STOP"  -> exit $ GoToNewStop state
     "EDIT_STOP" -> exit $ GoToNewStop state
@@ -630,24 +616,7 @@ eval (CallBackNewStop stopStatus) state = do
   
 
 eval (NewStopAdded currentLocationLatLong nextStopLocation lastStopLocation) state = do
-  _ <- pure $ printLog "NewStopAdded Action " nextStopLocation
-  -- let newState = state { data 
-  --   { activeRide 
-  --     { nextStopAddress = (\(StopLocation {address, lat, lon}) -> decodeAddress (getLocationInfoFromStopLocation address lat lon) true) <$> nextStopLocation ,
-  --       src_lat = (currentLocationLatLong.lat),
-  --       src_lon = (currentLocationLatLong.lng), 
-  --       nextStopLat = (\loc -> loc ^. _lat) <$> nextStopLocation, 
-  --       nextStopLon = (\loc -> loc ^. _lon) <$> nextStopLocation,
-  --       lastStopAddress = (\(StopLocation {address, lat, lon}) -> decodeAddress (getLocationInfoFromStopLocation address lat lon) true) <$> lastStopLocation
-  --     }
-  --   }, 
-  --   props
-  --     {showDottedRoute = false, 
-  --     arrivedAtStop = isNothing nextStopLocation,
-  --     routeVisible = false,
-  --     mapRendered = true
-  --     }}
-  -- updateAndExit newState $ Refresh newState {props{showNewStopPopup = false}}
+  void $ pure $ printLog "NewStopAdded Action " nextStopLocation
   exit $ GoToNewStop state
   
 eval (BottomNavBarAction (BottomNavBar.OnNavigate item)) state = do
@@ -778,7 +747,7 @@ eval (InAppKeyboardModalAction (InAppKeyboardModal.OnClickDone otp)) state = do
           enterOdometerReadingModal =  state.props.enterOtpModal, 
           endRideOdometerReadingModal = state.props.endRideOtpModal, 
           enterOdometerFocusIndex = 0,
-          endRideOdometerReadingValidationFailed = false
+          isInvalidOdometer = false
           }
         }
     else 
@@ -813,7 +782,7 @@ eval (InAppKeyboardModalOdometerAction (InAppKeyboardModal.OnClickDone odometerR
   if length odometerReading < 4 then do
     continue state
   else do
-    let newState = state{ props { odometerFileId = Nothing, enterOtpModal = false, endRideOtpModal = false, odometerValue = odometerReading, endRideOdometerReadingValidationFailed = false } }
+    let newState = state{ props { odometerFileId = Nothing, enterOtpModal = false, endRideOtpModal = false, odometerValue = odometerReading, isInvalidOdometer = false } }
     if (state.props.currentStage == ST.RideStarted)
       then do
         let startOdometerLength = length $ show state.data.activeRide.startOdometerReading
@@ -825,7 +794,7 @@ eval (InAppKeyboardModalOdometerAction (InAppKeyboardModal.OnClickDone odometerR
         if endOdometerReadingIsMoreThanStart endOdometerReading startOdometerReading && endOdometerReadingIsNotMoreThan500 endOdometerReading startOdometerReading then
           updateAndExit newState { props { odometerValue = endOdometerReading }} $ EndRide newState { props { odometerValue = endOdometerReading }}
         else do
-          continue state { props { endRideOdometerReadingValidationFailed = true}}
+          continue state { props { isInvalidOdometer = true}}
       else do
         updateAndExit newState $ StartRide newState
   where

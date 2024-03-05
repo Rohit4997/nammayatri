@@ -184,6 +184,17 @@ public class OverlaySheetService extends Service implements View.OnTouchListener
                 holder.intercityRideTypeTag.setVisibility(View.VISIBLE);
                 holder.gotoTag.setVisibility(View.GONE);
                 holder.customerTipTag.setVisibility(View.GONE);
+                if (!variant.equals(NO_VARIANT) && key.equals("yatrisathiprovider")) {
+                    if (Utils.getVariantType(variant).equals(Utils.VariantType.AC)) {
+                        holder.rideTypeTag.setBackgroundResource(R.drawable.ic_ac_variant_tag);
+                        holder.rideTypeTag.setVisibility(View.VISIBLE);
+                    } else {
+                        holder.rideTypeTag.setVisibility(View.VISIBLE);
+                        holder.rideTypeTag.setBackgroundResource(R.drawable.ic_non_ac_variant_tag);
+                        holder.rideTypeImage.setVisibility(View.GONE);
+                    }
+                    holder.rideTypeText.setText(variant);
+                }
                 holder.accessibilityTag.setVisibility(model.getDisabilityTag() ? View.VISIBLE : View.GONE);
                 holder.gotoTag.setVisibility(View.GONE);
                 holder.rideStartDateTimeTag.setVisibility(View.VISIBLE);
@@ -193,6 +204,7 @@ public class OverlaySheetService extends Service implements View.OnTouchListener
                 {
                     holder.rideStartDate.setText(model.getRideStartDate());
                 }
+                
             }
             else if (model.getCustomerTip() > 0 || model.getDisabilityTag() || model.isGotoTag() || (!variant.equals(NO_VARIANT) && key.equals("yatrisathiprovider"))) {
                 String pickupChargesText = model.getCustomerTip() > 0 ?

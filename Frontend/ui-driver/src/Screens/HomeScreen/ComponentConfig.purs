@@ -118,7 +118,7 @@ rideActionModalConfig state =
     rideStartTimer = state.props.rideStartTimer,
     tripDuration = (\tripDuration -> (if ( tripDuration / 3600) < 10 then "0" else "") <> (show ( tripDuration / 3600) <> ":") <> (if (tripDuration `mod` 3600) / 60 < 10 then "0" else "") <> show ( (tripDuration `mod` 3600) / 60)  <> " Hr") <$> state.data.activeRide.tripDuration,
     rideStartTime = state.data.activeRide.tripStartTime,
-    startODOReading = maybe (getValueToLocalStore RIDE_START_ODOMETER_READING) show state.data.activeRide.startOdometerReading
+    startODOReading = fromMaybe "--" $ show <$> state.data.activeRide.startOdometerReading
     }
     in rideActionModalConfig'
 
@@ -749,7 +749,7 @@ enterOdometerReadingConfig state = let
       },
       errorConfig {
         text = getString (ODOMETER_READING_VALIDATION_FAILED),
-        visibility = boolToVisibility $ state.props.endRideOdometerReadingValidationFailed
+        visibility = boolToVisibility $ state.props.isInvalidOdometer
       },
       textBoxConfig {
         textBoxesArray = [0,1,2,3,4],
@@ -1339,11 +1339,11 @@ getRideCompletedConfig state = let
       background = Color.mangolia
     },
     rentalRideConfig {
-    rideStartODOReading = (maybe (getValueToLocalStore RIDE_START_ODOMETER_READING) show state.data.activeRide.startOdometerReading) <> "Km",
-    rideEndODOReading = (getValueToLocalStore RIDE_END_ODOMETER_READING) <> "Km",
-    baseRideDuration =  (show $ (fromMaybe 0 state.data.activeRide.tripDuration) / 3600) <> " hr " <> (show $ ((fromMaybe 0 state.data.activeRide.tripDuration) `mod` 3600 / 60)) <> " m",
+    rideStartODOReading = (fromMaybe "--" $ show <$> state.data.activeRide.startOdometerReading) <> " Km",
+    rideEndODOReading = (fromMaybe "--" $ show <$> state.data.activeRide.endOdometerReading) <> " Km",
+    baseRideDuration =  HU.formatSecIntoHourMins (fromMaybe 0 state.data.activeRide.tripDuration),
     baseRideDistance = if state.data.activeRide.distance <= 0.0 then "0.0" else if(state.data.activeRide.distance < 1000.0) then HU.parseFloat (state.data.activeRide.distance) 2 <> " m" else HU.parseFloat((state.data.activeRide.distance / 1000.0)) 2 <> " km",
-    actualRideDuration = getActualDuration (fromMaybe (fromMaybe 0 $ Int.fromNumber state.data.activeRide.distance) state.data.endRideData.actualRideDuration),
+    actualRideDuration = HU.formatSecIntoHourMins $ fromMaybe (fromMaybe 0 $ Int.fromNumber state.data.activeRide.distance) state.data.endRideData.actualRideDuration,
     actualRideDistance = show ((fromMaybe 0 state.data.endRideData.actualRideDistance) / 1000) <> " km",
     startRideOdometerImage = getValueToLocalStore RIDE_START_ODOMETER,
     endRideOdometerImage = getValueToLocalStore RIDE_END_ODOMETER
@@ -1371,12 +1371,6 @@ getRideCompletedConfig state = let
     }
   }
   in config'
-
-getActualDuration :: Int -> String
-getActualDuration seconds = 
-  let  hours = seconds `div` 3600
-       minutes = (seconds `mod` 3600) `div` 60
-  in if hours > 0 then (show hours) <> " hr " <> (show minutes) <> " min" else (show minutes) <> " min"
 
 getRatingCardConfig :: ST.HomeScreenState -> RatingCard.RatingCardConfig
 getRatingCardConfig state = RatingCard.ratingCardConfig {

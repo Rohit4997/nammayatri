@@ -50,6 +50,68 @@
                             android:layout_marginBottom="6dp">
 
                             <LinearLayout
+                                android:id="@+id/rentalRideTypeTag"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginHorizontal="8dp"
+                                android:background="@drawable/ic_rental_variant_tag"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="8dp"
+                                android:visibility="gone">
+
+                                <ImageView
+                                    android:id="@+id/rentalRideTypeImage"
+                                    android:layout_width="17dp"
+                                    android:layout_height="17dp"
+                                    android:src="@drawable/ic_car_unfilled" />
+
+                                <TextView
+                                    android:id="@+id/rentalRideTypeText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:elevation="1dp"
+                                    android:paddingVertical="6dp"
+                                    android:fontFamily="@font/plus_jakartasans_semibold"
+                                    android:lineHeight="20dp"
+                                    android:paddingHorizontal="8dp"
+                                    android:text="@string/rental"
+                                    android:textColor="@color/white"
+                                    android:textSize="12dp" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/intercityRideTypeTag"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginHorizontal="8dp"
+                                android:background="@drawable/ic_intercity_variant_tag"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingHorizontal="8dp"
+                                android:visibility="gone">
+
+                                <ImageView
+                                    android:id="@+id/intercityRideTypeImage"
+                                    android:layout_width="17dp"
+                                    android:layout_height="17dp"
+                                    android:src="@drawable/intercity" />
+
+                                <TextView
+                                    android:id="@+id/intercityRideTypeText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:elevation="1dp"
+                                    android:paddingVertical="6dp"
+                                    android:fontFamily="@font/plus_jakartasans_semibold"
+                                    android:lineHeight="20dp"
+                                    android:paddingHorizontal="8dp"
+                                    android:text="@string/intercity"
+                                    android:textColor="@color/white"
+                                    android:textSize="12dp"  />
+                            </LinearLayout>
+
+                            <LinearLayout
                                 android:id="@+id/customerTipTag"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -105,69 +167,8 @@
                                     android:lineHeight="20dp"
                                     android:paddingHorizontal="8dp"
                                     android:text="AC SUV"
-                                    android:textColor="@color/white" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rentalRideTypeTag"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_marginHorizontal="8dp"
-                                android:background="@drawable/ic_rental_variant_tag"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="8dp"
-                                android:visibility="gone">
-
-                                <ImageView
-                                    android:id="@+id/rentalRideTypeImage"
-                                    android:layout_width="17dp"
-                                    android:layout_height="17dp"
-                                    android:src="@drawable/ic_car_unfilled" />
-
-                                <TextView
-                                    android:id="@+id/rentalRideTypeText"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:elevation="1dp"
-                                    android:paddingVertical="6dp"
-                                    android:fontFamily="@font/plus_jakartasans_semibold"
-                                    android:lineHeight="20dp"
-                                    android:layout_gravity="center"
-                                    android:paddingHorizontal="8dp"
-                                    android:text="@string/rental"
-                                    android:textColor="@color/white" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/intercityRideTypeTag"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_marginHorizontal="8dp"
-                                android:background="@drawable/ic_intercity_variant_tag"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="8dp"
-                                android:visibility="gone">
-
-                                <ImageView
-                                    android:id="@+id/intercityRideTypeImage"
-                                    android:layout_width="17dp"
-                                    android:layout_height="17dp"
-                                    android:src="@drawable/intercity" />
-
-                                <TextView
-                                    android:id="@+id/intercityRideTypeText"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:elevation="1dp"
-                                    android:paddingVertical="6dp"
-                                    android:fontFamily="@font/plus_jakartasans_semibold"
-                                    android:lineHeight="20dp"
-                                    android:layout_gravity="center"
-                                    android:paddingHorizontal="8dp"
-                                    android:text="@string/intercity"
-                                    android:textColor="@color/white" />
+                                    android:textColor="@color/white"
+                                    android:textSize="12dp"/>
                             </LinearLayout>
 
                             <LinearLayout

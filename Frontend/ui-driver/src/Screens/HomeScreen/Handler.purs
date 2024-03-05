@@ -69,17 +69,19 @@ homeScreen = do
     StartRide updatedState -> do
       modifyScreenState $ HomeScreenStateType (\_ → updatedState)
       LatLon lat lon ts <- getCurrentLocation updatedState.data.currentDriverLat updatedState.data.currentDriverLon  updatedState.data.activeRide.src_lat updatedState.data.activeRide.src_lon 700 false false
-      App.BackT $ App.NoBack <$> (pure $ GO_TO_START_RIDE {id: updatedState.data.activeRide.id, otp : updatedState.props.rideOtp , startOdometerReading : updatedState.props.odometerValue, startOdometerImage : updatedState.props.startRideOdometerImage, lat : lat , lon : lon , ts :ts} updatedState) 
+      let odometerValue = if updatedState.data.activeRide.tripType == Rental then Just updatedState.props.odometerValue else Nothing 
+      App.BackT $ App.NoBack <$> (pure $ GO_TO_START_RIDE {id: updatedState.data.activeRide.id, otp : updatedState.props.rideOtp , startOdometerReading : odometerValue, startOdometerImage : updatedState.props.startRideOdometerImage, lat : lat , lon : lon , ts :ts} updatedState) 
     StartZoneRide  updatedState -> do
       modifyScreenState $ HomeScreenStateType (\_ → updatedState)
       LatLon lat lon ts <- getCurrentLocation updatedState.data.currentDriverLat updatedState.data.currentDriverLon  updatedState.data.activeRide.src_lat updatedState.data.activeRide.src_lon 1000 true false
       App.BackT $ App.NoBack <$> (pure $ GO_TO_START_ZONE_RIDE {otp : updatedState.props.rideOtp , lat : lat , lon : lon ,ts :ts}) 
     EndRide updatedState -> do
       modifyScreenState $ HomeScreenStateType (\_ → updatedState)
-      let destLat = if updatedState.data.activeRide.tripType == Rental then fromMaybe updatedState.data.activeRide.src_lat updatedState.data.activeRide.nextStopLat else updatedState.data.activeRide.dest_lat
-          destLon = if updatedState.data.activeRide.tripType == Rental then fromMaybe updatedState.data.activeRide.src_lon updatedState.data.activeRide.nextStopLon else updatedState.data.activeRide.dest_lon
+      let destLat = if updatedState.data.activeRide.tripType == Rental then fromMaybe updatedState.data.activeRide.src_lat updatedState.data.activeRide.lastStopLat else updatedState.data.activeRide.dest_lat
+          destLon = if updatedState.data.activeRide.tripType == Rental then fromMaybe updatedState.data.activeRide.src_lon updatedState.data.activeRide.lastStopLon else updatedState.data.activeRide.dest_lon
+          odometerValue = if updatedState.data.activeRide.tripType == Rental then Just updatedState.props.odometerValue else Nothing 
       LatLon lat lon ts <- getCurrentLocation updatedState.data.currentDriverLat updatedState.data.currentDriverLon destLat destLon 700 false false
-      App.BackT $ App.BackPoint <$> (pure $ GO_TO_END_RIDE {id : updatedState.data.activeRide.id, endOtp : updatedState.props.rideOtp, endOdometerReading :updatedState.props.odometerValue, endOdometerImage: updatedState.props.endRideOdometerImage , lat : lat, lon : lon, ts :ts} updatedState)
+      App.BackT $ App.BackPoint <$> (pure $ GO_TO_END_RIDE {id : updatedState.data.activeRide.id, endOtp : updatedState.props.rideOtp, endOdometerReading : odometerValue, endOdometerImage: updatedState.props.endRideOdometerImage , lat : lat, lon : lon, ts :ts} updatedState)
     ArrivedAtStop updatedState -> do
       modifyScreenState $ HomeScreenStateType (\_ → updatedState)
       let destLat = fromMaybe 0.0 updatedState.data.activeRide.nextStopLat

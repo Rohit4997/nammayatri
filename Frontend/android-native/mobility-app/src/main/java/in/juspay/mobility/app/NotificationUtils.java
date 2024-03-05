@@ -143,25 +143,25 @@ public class NotificationUtils {
                 String rideStartTime = "";
                 String rideStartDate= "";
                 try {
-                    String rentalDateTimeString  = entity_payload.has("startTime") && !entity_payload.isNull("startTime") ? entity_payload.getString("startTime") : "";
+                    String rideDateTimeString  = entity_payload.has("startTime") && !entity_payload.isNull("startTime") ? entity_payload.getString("startTime") : "";
                     final SimpleDateFormat dateTimeWithMillis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", new Locale("en", "US"));
                     final SimpleDateFormat dateTimeWithoutMillis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", new Locale("en", "US"));
                     dateTimeWithMillis.setTimeZone(TimeZone.getTimeZone("UTC"));
                     dateTimeWithoutMillis.setTimeZone(TimeZone.getTimeZone("UTC"));
-                    Date rentalDateTime;
+                    Date rideDateTime;
                     try {
-                        rentalDateTime = dateTimeWithMillis.parse(rentalDateTimeString);
+                        rideDateTime = dateTimeWithMillis.parse(rideDateTimeString);
                     } catch (Exception e) {
-                        rentalDateTime = dateTimeWithoutMillis.parse(rentalDateTimeString);
+                        rideDateTime = dateTimeWithoutMillis.parse(rideDateTimeString);
                     }
-                    rentalDateTime.setTime(rentalDateTime.getTime() + (330 * 60 * 1000));
+                    rideDateTime.setTime(rideDateTime.getTime() + (330 * 60 * 1000));
                     final SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd");
                     final SimpleDateFormat tf1 = new SimpleDateFormat("hh:mm a");
                     df1.setTimeZone(TimeZone.getTimeZone("IST"));
                     tf1.setTimeZone(TimeZone.getTimeZone("IST"));
                     
-                    String date = df1.format(rentalDateTime);
-                    String time = tf1.format(rentalDateTime);
+                    String date = df1.format(rideDateTime);
+                    String time = tf1.format(rideDateTime);
                     
                     rideStartTime = time;
                     rideStartDate = date.equals(df1.format(new Date())) ? "Today" : date;

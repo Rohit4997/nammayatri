@@ -630,6 +630,13 @@ formatSecIntoMinSecs seconds =
   in 
     show mins <> ":" <> (if secs < 10 then "0" else "") <> show secs
 
+formatSecIntoHourMins :: Int -> String
+formatSecIntoHourMins seconds =
+  let 
+    hours = seconds `div` 3600
+    mins = (seconds `mod` 3600) `div` 60
+  in (if hours > 0 then show hours <> " hr " else "") <> show mins <> " min"
+
 splitBasedOnLanguage :: String -> String
 splitBasedOnLanguage str = 
     let strArray = DS.split (DS.Pattern "-*$*-") str
