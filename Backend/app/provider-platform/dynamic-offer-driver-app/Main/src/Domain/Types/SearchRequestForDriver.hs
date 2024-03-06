@@ -20,6 +20,8 @@ import qualified Domain.Types.BapMetadata as DSM
 import Domain.Types.Common as DTC
 import Domain.Types.Driver.GoHomeFeature.DriverGoHomeRequest (DriverGoHomeRequest)
 import qualified Domain.Types.DriverInformation as DI
+import qualified Domain.Types.Estimate as DTE
+import qualified Domain.Types.FareParameters as DFParams
 import qualified Domain.Types.Location as DLoc
 import qualified Domain.Types.Merchant as DM
 import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
@@ -120,12 +122,13 @@ data SearchRequestForDriverAPIEntity = SearchRequestForDriverAPIEntity
     requestedVehicleVariant :: Variant.Variant,
     isTranslated :: Bool,
     customerCancellationDues :: HighPrecMoney,
-    isValueAddNP :: Bool
+    isValueAddNP :: Bool,
+    driverPickUpCharges :: Maybe Money
   }
   deriving (Generic, ToJSON, FromJSON, ToSchema, Show, PrettyShow)
 
-makeSearchRequestForDriverAPIEntity :: SearchRequestForDriver -> DSR.SearchRequest -> DST.SearchTry -> Maybe DSM.BapMetadata -> Seconds -> Maybe Money -> Seconds -> Variant.Variant -> Bool -> Bool -> SearchRequestForDriverAPIEntity
-makeSearchRequestForDriverAPIEntity nearbyReq searchRequest searchTry bapMetadata delayDuration mbDriverDefaultExtraForSpecialLocation keepHiddenForSeconds requestedVehicleVariant isTranslated isValueAddNP =
+makeSearchRequestForDriverAPIEntity :: SearchRequestForDriver -> DSR.SearchRequest -> DST.SearchTry -> Maybe DSM.BapMetadata -> Seconds -> Maybe Money -> Seconds -> Variant.Variant -> Bool -> Bool -> Maybe DTE.Estimate -> SearchRequestForDriverAPIEntity
+makeSearchRequestForDriverAPIEntity nearbyReq searchRequest searchTry bapMetadata delayDuration mbDriverDefaultExtraForSpecialLocation keepHiddenForSeconds requestedVehicleVariant isTranslated isValueAddNP mbEstimate =
   SearchRequestForDriverAPIEntity
     { searchRequestId = nearbyReq.searchTryId,
       searchTryId = nearbyReq.searchTryId,
@@ -158,9 +161,16 @@ makeSearchRequestForDriverAPIEntity nearbyReq searchRequest searchTry bapMetadat
       tripCategory = searchTry.tripCategory,
       duration = searchRequest.estimatedDuration,
       pickupZone = nearbyReq.pickupZone,
+      driverPickUpCharges = extractDriverPickupChanges,
       specialZoneExtraTip = min nearbyReq.driverMaxExtraFee mbDriverDefaultExtraForSpecialLocation,
       ..
     }
+  where
+    extractDriverPickupChanges =
+      mbEstimate >>= \estimate ->
+        estimate.fareParams >>= \fP -> case fP.fareParametersDetails of
+          DFParams.ProgressiveDetails det -> Just det.deadKmFare
+          _ -> Nothing
 
 convertDomainType :: DLoc.Location -> DSSL.SearchReqLocation
 convertDomainType DLoc.Location {..} =
