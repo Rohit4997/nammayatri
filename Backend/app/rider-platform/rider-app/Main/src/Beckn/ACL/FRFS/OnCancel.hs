@@ -17,6 +17,7 @@ module Beckn.ACL.FRFS.OnCancel (buildOnCancelReq) where
 import qualified BecknV2.FRFS.Enums as Spec
 import qualified BecknV2.FRFS.Types as Spec
 import qualified BecknV2.FRFS.Utils as Utils
+import qualified Data.Aeson as A
 import qualified Domain.Action.Beckn.FRFS.OnCancel as DOnCancel
 import Kernel.Prelude
 import Kernel.Types.Error
@@ -47,7 +48,7 @@ buildOnCancelReq onCancelReq = do
   baseFare <- getCancellationParams quoteBreakup Spec.BASE_FARE & fromMaybeM (InvalidRequest "CancellationParams baseFare not found")
 
   orderStatus_ <- order.orderStatus & fromMaybeM (InvalidRequest "Order Status not found")
-  orderStatus <- (decodeFromText orderStatus_ :: Maybe Spec.OnCancelOrderStatus) & fromMaybeM (InvalidRequest "Failed to parse orderStatus in onCancel Req")
+  orderStatus <- (A.decode $ A.encode orderStatus_ :: Maybe Spec.OnCancelOrderStatus) & fromMaybeM (InvalidRequest "Failed to parse orderStatus in onCancel Req")
 
   pure $
     DOnCancel.DOnCancel

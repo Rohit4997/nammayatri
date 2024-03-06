@@ -37,10 +37,10 @@ import Kernel.External.Payment.Interface
 import qualified Kernel.External.Payment.Interface.Types as Payment
 import Kernel.Prelude
 import qualified Kernel.Prelude
+import qualified Kernel.Types.APISuccess as APISuccess
 import Kernel.Types.Beckn.City
 import Kernel.Types.Beckn.Context as Context
 import Kernel.Types.Error (MerchantError (MerchantOperatingCityNotFound))
-import qualified Kernel.Types.APISuccess as APISuccess
 import Kernel.Types.Id
 import Kernel.Utils.Common
 import Kernel.Utils.Error.BaseError.HTTPError.BecknAPIError
@@ -151,13 +151,13 @@ postFrfsQuoteConfirm (mbPersonId, merchantId_) quoteId = do
   (rider, dConfirmRes) <- confirm
   -- handle (errHandler dConfirmRes.booking) $
   --   void $ withShortRetry $ CallBPP.init dConfirmRes.bppSubscriberUrl becknInitReq
+  merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking dConfirmRes
   stations <- decodeFromText dConfirmRes.stationsJson & fromMaybeM (InternalError "Invalid stations jsons from db")
   now <- getCurrentTime
 
   when (dConfirmRes.status == DFRFSTicketBooking.NEW && dConfirmRes.validTill > now) $ do
     providerUrl <- dConfirmRes.bppSubscriberUrl & parseBaseUrl & fromMaybeM (InvalidRequest "Invalid provider url")
     bapConfig <- QBC.findByMerchantIdAndDomain (Just merchant.id) (show Spec.FRFS) >>= fromMaybeM (InternalError "Beckn Config not found")
-    merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking dConfirmRes
     let mRiderName = rider.firstName <&> (\fName -> rider.lastName & maybe fName (\lName -> fName <> " " <> lName))
     mRiderNumber <- mapM decrypt rider.mobileNumber
     -- Add default TTL of 30 seconds or the value provided in the config
@@ -167,7 +167,7 @@ postFrfsQuoteConfirm (mbPersonId, merchantId_) quoteId = do
     bknInitReq <- ACL.buildInitReq (mRiderName, mRiderNumber) dConfirmRes' bapConfig Utils.BppData {bppId = dConfirmRes.bppSubscriberId, bppUri = dConfirmRes.bppSubscriberUrl} merchantOperatingCity.city
     logDebug $ "FRFS SearchReq " <> (encodeToText bknInitReq)
     void $ CallBPP.init providerUrl bknInitReq
-  return $ makeBookingStatusAPI dConfirmRes stations
+  return $ makeBookingStatusAPI dConfirmRes stations merchantOperatingCity.city
   where
     -- errHandler booking exc
     --   | Just BecknAPICallError {} <- fromException @BecknAPICallError exc = cancelFRFSTicketBooking booking
@@ -207,9 +207,11 @@ postFrfsQuoteConfirm (mbPersonId, merchantId_) quoteId = do
       QFRFSTicketBooking.create booking
       return (rider, booking)
 
-    makeBookingStatusAPI booking stations =
+    makeBookingStatusAPI booking stations city =
       FRFSTicketService.FRFSTicketBookingStatusAPIRes
         { bookingId = booking.id,
+          city,
+          updatedAt = booking.updatedAt,
           _type = booking._type,
           price = booking.price,
           quantity = booking.quantity,
@@ -233,7 +235,7 @@ getFrfsBookingStatus (mbPersonId, merchantId_) bookingId = do
   unless (personId == booking'.riderId) $ throwError AccessDenied
   person <- B.runInReplica $ QP.findById personId >>= fromMaybeM (PersonNotFound personId.getId)
   now <- getCurrentTime
-  when (booking'.status /= DFRFSTicketBooking.CONFIRMED && booking'.status /= DFRFSTicketBooking.FAILED && booking'.validTill < now) $
+  when (booking'.status /= DFRFSTicketBooking.CONFIRMED && booking'.status /= DFRFSTicketBooking.FAILED && booking'.status /= DFRFSTicketBooking.CANCELLED && booking'.validTill < now) $
     void $ QFRFSTicketBooking.updateStatusById DFRFSTicketBooking.FAILED bookingId
   booking <- QFRFSTicketBooking.findById bookingId >>= fromMaybeM (InvalidRequest "Invalid booking id")
   merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking booking
@@ -378,6 +380,7 @@ getFrfsBookingList (mbPersonId, _) = do
 buildFRFSTicketBookingStatusAPIRes :: DFRFSTicketBooking.FRFSTicketBooking -> Maybe FRFSTicketService.FRFSBookingPaymentAPI -> Environment.Flow FRFSTicketService.FRFSTicketBookingStatusAPIRes
 buildFRFSTicketBookingStatusAPIRes booking payment = do
   stations <- decodeFromText booking.stationsJson & fromMaybeM (InternalError "Invalid stations jsons from db")
+  merchantOperatingCity <- DACFOC.getMerchantOperatingCityFromBooking booking
   tickets' <- B.runInReplica $ QFRFSTicket.findAllByTicketBookingId booking.id
   let tickets =
         map
@@ -388,6 +391,8 @@ buildFRFSTicketBookingStatusAPIRes booking payment = do
   return $
     FRFSTicketService.FRFSTicketBookingStatusAPIRes
       { bookingId = booking.id,
+        city = merchantOperatingCity.city,
+        updatedAt = booking.updatedAt,
         _type = booking._type,
         price = booking.price,
         quantity = booking.quantity,

@@ -39,6 +39,8 @@ types:
   FRFSTicketBookingStatusAPIRes:
     bookingId: Id FRFSTicketBooking
     status: FRFSTicketBookingStatus
+    city: City
+    updatedAt: UTCTime
     _type: FRFSQuoteType
     quantity: Int
     vehicleType: FRFSVehicleType
