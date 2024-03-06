@@ -192,7 +192,7 @@ import LocalStorage.Cache (clearCache)
 import DecodeUtil (getAnyFromWindow)
 import Data.Foldable (foldMap)
 import Screens.ReportIssueChatScreen.ScreenData as ReportIssueChatScreenData
-
+import Screens.RideSelectionScreen.Transformer (myRideListTransformer)
 import Services.FlowCache as FlowCache
 
 baseAppFlow :: GlobalPayload -> Boolean-> FlowBT String Unit
@@ -1514,7 +1514,6 @@ homeScreenFlow = do
       searchLocationFlow --rentalsScreenFlow
     GO_TO_SCHEDULED_RIDES -> rideScheduledFlow
     GO_TO_NAMMASAFETY state triggerSos showtestDrill -> do
-      let rideId = currentState.homeScreen.data.driverInfoCardState.rideId
       modifyScreenState
         $ NammaSafetyScreenStateType
             ( \nammaSafetyScreen ->
@@ -1525,16 +1524,19 @@ homeScreenFlow = do
                     , showTestDrill = false
                     , showShimmer = true
                     , confirmTestDrill = showtestDrill
+                    , checkPastRide = state.props.currentStage == HomeScreen
                     }
                   , data
-                    { rideId = rideId
-                    , vehicleDetails = currentState.homeScreen.data.driverInfoCardState.registrationNumber
-                    , config = state.data.config
+                    { rideId = state.data.driverInfoCardState.rideId
+                    , vehicleDetails = state.data.driverInfoCardState.registrationNumber
                     }
                   }
             )
       case (triggerSos || showtestDrill) of
-        true -> activateSafetyScreenFlow
+        true -> do 
+          let isRideCompleted = state.props.currentStage == RideCompleted
+          modifyScreenState $ NammaSafetyScreenStateType (\nammaSafetyScreen -> nammaSafetyScreen { props{reportPastRide = isRideCompleted}, data{lastRideDetails = if isRideCompleted then Arr.head $ myRideListTransformer true [state.data.ratingViewState.rideBookingRes] else Nothing}})
+          activateSafetyScreenFlow
         false -> safetySettingsFlow
     SAFETY_SUPPORT state isSafe -> do
       res <- lift $ lift $ Remote.sendSafetySupport $ Remote.makeAskSupportRequest state.props.bookingId isSafe $ "User need help - Ride on different route"
@@ -3666,8 +3668,9 @@ activateSafetyScreenFlow = do
       modifyScreenState $ EmergencyContactsScreenStateType (\emergencyContactScreen -> emergencyContactScreen{props{fromSosFlow = true}, data {emergencyContactsList = state.data.emergencyContactsList}})
       emergencyScreenFlow
     ActivateSafetyScreen.CreateSos state isPoliceFlow -> do
-      (GlobalState currentState) <- getState
-      let rideId = currentState.homeScreen.data.driverInfoCardState.rideId
+      let rideId = case state.data.lastRideDetails of
+                    Nothing -> state.data.rideId
+                    Just ride -> ride.rideId
           flowType = if isPoliceFlow then "Police" else "SafetyFlow"
       if state.props.showTestDrill
         then do

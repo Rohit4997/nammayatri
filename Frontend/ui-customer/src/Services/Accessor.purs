@@ -287,3 +287,6 @@ _peopleCategories = lens (unwrap >>> _.peopleCategories) (\oldRec newVal -> wrap
 
 _createdAt :: forall a b c. Newtype a { createdAt :: b | c } => Lens' a b
 _createdAt = lens (unwrap >>> _.createdAt) (\oldRec newVal -> wrap ((unwrap oldRec) { createdAt = newVal }))
+
+_rideEndTime :: forall a b c. Newtype a { rideEndTime :: b | c } => Lens' a b
+_rideEndTime = lens (unwrap >>> _.rideEndTime) (\oldRec newVal -> wrap ((unwrap oldRec) { rideEndTime = newVal }))

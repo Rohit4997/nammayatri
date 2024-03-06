@@ -1986,7 +1986,8 @@ type NammaSafetyScreenData =  {
   vehicleDetails :: String,
   videoList :: Array RC.SafetyVideoConfig,
   sosType :: Maybe SosFlow,
-  config :: AppConfig
+  config :: AppConfig,
+  lastRideDetails :: Maybe IndividualRideCardState
  }
 
 type NammaSafetyScreenProps =  {
@@ -2007,7 +2008,10 @@ type NammaSafetyScreenProps =  {
   shouldCallAutomatically :: Boolean,
   fromDeepLink :: Boolean,
   showRideShareOptionsPopup :: Boolean,
-  showVideoView :: Boolean
+  showPastRidePopUp :: Boolean,
+  showVideoView :: Boolean,
+  checkPastRide :: Boolean,
+  reportPastRide :: Boolean
 }
 data RecordingState = RECORDING | NOT_RECORDING | SHARING | UPLOADING | SHARED
 

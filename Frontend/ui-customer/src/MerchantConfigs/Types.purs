@@ -70,6 +70,7 @@ type AppConfigCustomer a =
   , cityConfig :: Array CityConfig
   , enableSingleEstimate :: Boolean
   , driverLocationPolling :: DriverLocationPollingConfig
+  , safety :: Safety
   | a
   }
 
@@ -376,4 +377,8 @@ type GeoCodeConfig = {
 
 type DriverLocationPollingConfig = {
   retryExpFactor :: Int
+}
+
+type Safety = {
+  pastRideInterval :: Int
 }

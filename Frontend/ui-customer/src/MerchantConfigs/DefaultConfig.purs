@@ -339,6 +339,9 @@ config =
   , driverLocationPolling : {
     retryExpFactor : 3
   }
+  , safety : {
+      pastRideInterval : 15
+  }
 }
 
 defaultCityConfig :: CityConfig

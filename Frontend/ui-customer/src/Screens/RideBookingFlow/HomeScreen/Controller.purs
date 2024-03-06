@@ -1684,6 +1684,7 @@ eval WhereToClick state = do
       updateState = state{props{isSource = Just false, isSearchLocation = SearchLocation, currentStage = SearchLocationModel, searchLocationModelProps{crossBtnSrcVisibility = false, findPlaceIllustration = null state.data.locationList }, rideSearchProps{sessionId = generateSessionId unit}}, data{source=(getString CURRENT_LOCATION)}}
   exit $ UpdateSavedLocation updateState 
 
+eval (RideCompletedAC RideCompletedCard.GoToSOS) state = exit $ GoToNammaSafety state true false 
 eval (RideCompletedAC (RideCompletedCard.SkipButtonActionController (PrimaryButtonController.OnClick))) state = 
   case state.data.ratingViewState.issueFacedView of
     true -> do
