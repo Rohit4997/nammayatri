@@ -44,6 +44,7 @@ import Components.SettingSideBar.Controller as SideBar
 import Components.MessagingView.Controller (ChatComponent)
 import Screens(ScreenName)
 import PrestoDOM.List
+import JBridge (Location)
 
 type Contacts = {
   name :: String,
@@ -607,6 +608,7 @@ type HomeScreenStateData =
   , bannerData :: BannerCarousalData
   , contactList :: Maybe (Array NewContacts)
   , followers :: Maybe (Array Followers)
+  , hotSpotInfo :: Array HotSpotData
   }
 
 type RentalsInfo = 
@@ -788,6 +790,7 @@ type HomeScreenStateProps =
   , suggestedRideFlow :: Boolean
   , locateOnMapProps :: LocateOnMapProps
   , showSpecialZoneInfoPopup :: Boolean
+  , hotSpot :: HotSpotProps
   }
 
 data BottomNavBarIcon = TICKETING | MOBILITY
@@ -1104,15 +1107,6 @@ data ErrorType = INVALID_EMAIL | EMAIL_EXISTS | EMAIL_CANNOT_BE_BLANK | INVALID_
 
 derive instance genericErrorType :: Generic ErrorType _
 instance eqErrorType :: Eq ErrorType where eq = genericEq
-
-type Location = {
-  place :: String,
-  lat :: Number,
-  lng :: Number,
-  address :: Maybe String,
-  city :: Maybe String,
-  isSpecialPickUp :: Boolean
-}
 
 type DriverInfoCard =
   { otp :: String
@@ -2173,7 +2167,6 @@ type MetroTicketStatusScreenData = {
   quoteId :: String
 }
 
-
 type MetroTicketStatusScreenProps = {
   showShimmer :: Boolean
 , paymentStatus :: PP.PaymentStatus
@@ -2212,3 +2205,13 @@ data NavigationMode = WALK | DRIVE
 
 derive instance genericNavigationMode :: Generic NavigationMode _
 instance showNavigationMode :: Show NavigationMode where show = genericShow
+
+type HotSpotProps = {
+    selectedSpot :: Maybe Location
+  , centroidPoint :: Maybe Paths
+}
+
+type HotSpotData = {
+    lat :: Number
+  , lon :: Number
+}

@@ -486,7 +486,8 @@ newtype OneWaySearchReq = OneWaySearchReq {
   isReallocationEnabled :: Maybe Boolean,
   isSourceManuallyMoved :: Maybe Boolean,
   isDestinationManuallyMoved :: Maybe Boolean,
-  sessionToken :: Maybe String
+  sessionToken :: Maybe String,
+  isSpecialLocation :: Maybe Boolean
 }
 
 newtype SearchReqLocation = SearchReqLocation {
@@ -1624,14 +1625,16 @@ newtype ServiceabilityRes = ServiceabilityRes
   { serviceable :: Boolean,
     -- geoJson :: Maybe String, :: to be deprecated
     specialLocation :: Maybe SpecialLocation,
-    city :: Maybe String 
+    city :: Maybe String ,
+    hotSpotInfo :: Array HotSpotInfo
   }
 
 newtype ServiceabilityResDestination = ServiceabilityResDestination
   { serviceable :: Boolean,
     -- geoJson :: Maybe String, :: to be deprecated
     specialLocation :: Maybe SpecialLocation,
-    city :: Maybe String
+    city :: Maybe String,
+    hotSpotInfo :: Array HotSpotInfo
   }
   
 newtype SpecialLocation = SpecialLocation
@@ -1657,6 +1660,11 @@ newtype GateInfoFull = GateInfoFull {
   id :: String,
   name :: String,
   point :: LatLong
+}
+
+newtype HotSpotInfo = HotSpotInfo {
+  centroidLatLong :: LatLong,
+  geoHash :: String
 }
 
 instance makeOriginServiceabilityReq :: RestEndpoint ServiceabilityReq ServiceabilityRes where
@@ -1718,6 +1726,12 @@ instance showGateInfoFull :: Show GateInfoFull where show = genericShow
 instance decodeGateInfoFull :: Decode GateInfoFull where decode = defaultDecode
 instance encodeGateInfoFull :: Encode GateInfoFull where encode = defaultEncode
 
+derive instance genericHotSpotInfo :: Generic HotSpotInfo _
+derive instance newtypeHotSpotInfo:: Newtype HotSpotInfo _
+instance standardEncodeHotSpotInfo :: StandardEncode HotSpotInfo where standardEncode (HotSpotInfo req) = standardEncode req
+instance showHotSpotInfo :: Show HotSpotInfo where show = genericShow
+instance decodeHotSpotInfo :: Decode HotSpotInfo where decode = defaultDecode
+instance encodeHotSpotInfo :: Encode HotSpotInfo where encode = defaultEncode
 
 ----------------------------------------------------------------------- flowStatus api -------------------------------------------------------------------
 

@@ -338,8 +338,8 @@ rideSearchBT payload = do
             BackT $ pure GoBack
 
 
-makeRideSearchReq :: Number -> Number -> Number -> Number -> Address -> Address -> Boolean -> Boolean -> String -> SearchReq
-makeRideSearchReq slat slong dlat dlong srcAdd desAdd sourceManuallyMoved destManuallyMoved sessionToken =
+makeRideSearchReq :: Number -> Number -> Number -> Number -> Address -> Address -> Boolean -> Boolean -> String -> Boolean -> SearchReq
+makeRideSearchReq slat slong dlat dlong srcAdd desAdd sourceManuallyMoved destManuallyMoved sessionToken isSpecialLocation =
     let appConfig = CP.getAppConfig CP.appConfig
     in  SearchReq { "contents" : OneWaySearchReq{
                                     "destination" : SearchReqLocation {
@@ -359,7 +359,8 @@ makeRideSearchReq slat slong dlat dlong srcAdd desAdd sourceManuallyMoved destMa
                                     "isReallocationEnabled" : Just appConfig.feature.enableReAllocation,
                                     "isSourceManuallyMoved" : Just sourceManuallyMoved,
                                     "isDestinationManuallyMoved" : Just destManuallyMoved,
-                                    "sessionToken" : Just sessionToken
+                                    "sessionToken" : Just sessionToken,
+                                    "isSpecialLocation" : Just isSpecialLocation
                                 },
                     "fareProductType" : "ONE_WAY"
                    }

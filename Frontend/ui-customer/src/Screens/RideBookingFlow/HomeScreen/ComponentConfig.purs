@@ -1400,7 +1400,7 @@ zoneTimerExpiredConfig state = let
   }
   in popUpConfig'
 
-menuButtonConfig :: ST.HomeScreenState -> ST.Location -> MenuButton.Config
+menuButtonConfig :: ST.HomeScreenState -> JB.Location -> MenuButton.Config
 menuButtonConfig state item = let
     config = MenuButton.config
     menuButtonConfig' = config {
