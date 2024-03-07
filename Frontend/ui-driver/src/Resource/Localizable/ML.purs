@@ -1280,3 +1280,4 @@ getML stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "പ്രത്യേക വീട്ടില്‍, നികടിവിളിക്കുന്ന ഗ്രാഹകരുടെ പ്രാഥമിക റൈഡ് അഭ്യർത്ഥനകളും ലഭിക്കുന്നു!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ഒരു പ്രത്യേക പിക്കപ്പ് വേലികളിൽ പ്രധാന റൈഡ് അഭ്യർത്ഥനകൾ നേടുക"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "പ്രാധാന്യ റൈഡുകൾക്കായി പച്ച പ്രദേശം തിരഞ്ഞെടുക്കുക"
+        PRIORITY_RIDE_EXPIERENCE -> "പ്രാധാന്യ റൈഡ് അനുഭവം"

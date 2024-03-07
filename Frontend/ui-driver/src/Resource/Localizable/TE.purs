@@ -1280,3 +1280,4 @@ getTE stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ప్రత్యేక జోన్‌లో, మీరు సమీప కస్టమర్‌ల నుండి ప్రాధాన్యత గల రైడ్ అభ్యర్థనలను పొందుతారు!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ప్రత్యేక పికప్ జోన్‌లో ప్రాధాన్యత గల రైడ్ అభ్యర్థనలను పొందండి"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "ప్రాధాన్యత గల రైడ్ కోసం పచ్చ ప్రాంతం ఎంచుకోండి"
+        PRIORITY_RIDE_EXPIERENCE -> "ప్రాధాన్యత గల రైడ్ అనుభవం"

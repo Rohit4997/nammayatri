@@ -478,7 +478,7 @@ gotoRecenterAndSupport state push =
     , margin $ Margin 12 4 12 0
     , padding $ PaddingRight 30
     , gravity if centerView then CENTER_HORIZONTAL else RIGHT
-    , visibility if state.props.driverStatusSet /= ST.Offline then VISIBLE else GONE
+    , visibility if (DA.any (_ == state.props.currentStage) [RideAccepted, RideStarted, ChatWithCustomer] || not state.props.statusOnline) then GONE else VISIBLE
     ][ linearLayout
         [ width WRAP_CONTENT
         , height if showReportText then MATCH_PARENT else WRAP_CONTENT
@@ -806,7 +806,7 @@ accessibilityHeaderView push state accessibilityHeaderconfig =
   linearLayout
   [ weight 1.0
   , height MATCH_PARENT
-  , gravity CENTER
+  , gravity LEFT
   , visibility if isJust state.data.activeRide.disabilityTag then VISIBLE else GONE
   , margin (Margin 10 10 10 10)
   , background accessibilityHeaderconfig.background
@@ -817,7 +817,7 @@ accessibilityHeaderView push state accessibilityHeaderconfig =
     [ width $ V 25
     , imageWithFallback accessibilityHeaderconfig.imageUrl
     , height $ V 22
-    , margin $ MarginRight 13
+    , margin $ Margin 13 5 13 0
     ]
   , linearLayout
     [ height WRAP_CONTENT

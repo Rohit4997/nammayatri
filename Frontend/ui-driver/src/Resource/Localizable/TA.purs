@@ -1280,3 +1280,4 @@ getTA stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "சிறப்பு ஜோனில், அருகிலுள்ள வாடிக்கையாளர்களின் சவாரிகளுக்கு முன்னுரிமை பெறுவீர்கள்!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "சிறப்பு பிக்கப் ஜோனில், சவாரிகளுக்கு முன்னுரிமை பெறுங்கள்"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "முன்னுரிமை சவாரிகளுக்கு பரிந்துரைக்க பச்சை பகுதியைத் தேர்ந்தெடுக்கவும்"
+        PRIORITY_RIDE_EXPIERENCE -> "முன்னுரிமை சவாரி அனுபவம்"

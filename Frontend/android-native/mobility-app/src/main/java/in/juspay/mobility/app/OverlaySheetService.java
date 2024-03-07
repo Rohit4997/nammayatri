@@ -143,11 +143,11 @@ public class OverlaySheetService extends Service implements View.OnTouchListener
                 if (showSpecialLocationTag && model.getSpecialZoneExtraTip() > 0) {
                     model.setOfferedPrice(model.getSpecialZoneExtraTip());
                     model.setUpdatedAmount(model.getSpecialZoneExtraTip());
+                    holder.specialLocExtraTip.setVisibility(View.VISIBLE);
                 }
                 holder.tagsBlock.setVisibility(View.VISIBLE);
                 holder.accessibilityTag.setVisibility(model.getDisabilityTag() ? View.VISIBLE : View.GONE);
                 holder.specialLocTag.setVisibility(showSpecialLocationTag ? View.VISIBLE : View.GONE);
-                holder.specialLocExtraTip.setVisibility(View.VISIBLE);
                 holder.textIncludesCharges.setText(pickupChargesText);
                 holder.customerTipText.setText(sharedPref.getString("CURRENCY", "₹") + " " + model.getCustomerTip() + " " + getString(R.string.tip));
                 holder.customerTipTag.setVisibility(model.getCustomerTip() > 0 ? View.VISIBLE : View.GONE);

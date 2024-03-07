@@ -1280,3 +1280,4 @@ getEN stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "In the special zone, you get priority ride requests from the nearest customers!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "Get priority ride requests in a special pickup zone"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "Select a green area for priority rides"
+        PRIORITY_RIDE_EXPIERENCE -> "Priority Ride Experience"

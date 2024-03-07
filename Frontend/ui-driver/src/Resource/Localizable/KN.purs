@@ -1280,4 +1280,5 @@ getKN stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ವಿಶೇಷ ಜೋನ್ ನಲ್ಲಿ, ನೀವು ಹತ್ತಿರದ ಗ್ರಾಹಕರಿಂದ ಆದ್ಯತೆಯ ರೈಡ್ ವಿನಂತಿಗಳನ್ನು ಪಡೆಯುತ್ತೀರಿ!”"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "ವಿಶೇಷ ಪಿಕಪ್ ವಲಯದಲ್ಲಿ ಆದ್ಯತೆಯ ರೈಡ್ ವಿನಂತಿಗಳನ್ನು ಪಡೆಯಿರಿ"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "ಆದ್ಯತೆಯ ಸವಾರಿಗಳಿಗಾಗಿ ಹಸಿರು ಪ್ರದೇಶವನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        PRIORITY_RIDE_EXPIERENCE -> "ಆದ್ಯತೆಯ ಸವಾರಿ ಅನುಭವ"
         

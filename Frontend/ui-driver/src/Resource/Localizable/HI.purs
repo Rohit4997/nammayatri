@@ -1280,3 +1280,4 @@ getHI stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "विशेष क्षेत्र में, आपको सबसे निकट ग्राहकों से प्राथमिकता राइड अनुरोध मिलता है!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "एक विशेष पिकअप जोन में प्राथमिक राइड अनुरोध प्राप्त करें"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "प्राथमिकता से सवारी के लिए हरा क्षेत्र चुनें"
+        PRIORITY_RIDE_EXPIERENCE -> "प्राथमिकता से सवारी का अनुभव"

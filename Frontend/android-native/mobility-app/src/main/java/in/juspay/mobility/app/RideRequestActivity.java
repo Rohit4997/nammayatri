@@ -154,10 +154,10 @@ public class RideRequestActivity extends AppCompatActivity {
                 if (showSpecialLocationTag && model.getSpecialZoneExtraTip() > 0) {
                     model.setOfferedPrice(model.getSpecialZoneExtraTip());
                     model.setUpdatedAmount(model.getSpecialZoneExtraTip());
+                    holder.specialLocExtraTip.setVisibility(View.VISIBLE);
                 }
                 holder.customerTipTag.setVisibility(model.getCustomerTip() > 0 ? View.VISIBLE : View.GONE);
                 holder.specialLocTag.setVisibility(showSpecialLocationTag ? View.VISIBLE : View.GONE);
-                holder.specialLocExtraTip.setVisibility(View.VISIBLE);
                 holder.customerTipText.setText(sharedPref.getString("CURRENCY", "₹") + " " + model.getCustomerTip());
                 holder.gotoTag.setVisibility(model.isGotoTag() ? View.VISIBLE : View.GONE);
                 holder.reqButton.setTextColor(model.isGotoTag() ? getColor(R.color.yellow900) : getColor(R.color.white));

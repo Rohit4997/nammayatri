@@ -112,7 +112,7 @@ topPillView config push =
     [ width $ V 12
     , height $ V 12
     , margin $ Margin 0 2 6 0
-    , visibility $ boolToVisibility (isNothing $ config.topCard.topPill.icon)
+    , visibility $ boolToVisibility (not $ isNothing $ config.topCard.topPill.icon)
     , imageWithFallback $ fetchImage FF_COMMON_ASSET $ fromMaybe "" config.topCard.topPill.icon
     ]
   ,  textView $ [

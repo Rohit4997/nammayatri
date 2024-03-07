@@ -138,9 +138,10 @@ public class NotificationUtils {
                     JSONObject addressPickUp = new JSONObject(entity_payload.get("fromLocation").toString());
                     JSONObject addressDrop = new JSONObject(entity_payload.get("toLocation").toString());
                     String[] specialZoneSplit = entity_payload.optString("specialLocationTag", "None").split("_");
+                    boolean isPickupZone = entity_payload.optBoolean("pickupZone", false);
                     boolean isSpecialPickupZone = false;
                     if(specialZoneSplit.length > 0) {
-                        isSpecialPickupZone = "PickupZone".equals(specialZoneSplit[specialZoneSplit.length - 1]);
+                        isSpecialPickupZone = "PickupZone".equals(specialZoneSplit[specialZoneSplit.length - 1]) && isPickupZone;
                     }
                     sheetData.putString("searchRequestId", entity_payload.getString("searchRequestId"));
                     sheetData.putString("searchRequestValidTill", entity_payload.getString("searchRequestValidTill"));

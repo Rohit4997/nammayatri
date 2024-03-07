@@ -1281,3 +1281,4 @@ getBN stringKey =
         SPECIAL_PICKUP_ZONE_POPUP_INFO -> "বিশেষ জোনে, আপনি নিকটতম গ্রাহকদের থেকে প্রাথমিকতা অনুমোদন পান!"
         INSIDE_SPECIAL_PICKUP_ZONE_POPUP_INFO -> "একটি বিশেষ পিকআপ জোনে প্রাথমিক রাইড অনুরোধ পান"
         SELECT_A_GREEN_AREA_FOR_PRIORITY_RIDES -> "প্রাথমিকতা রাইডের জন্য একটি সবুজ এলাকা নির্বাচন করুন"
+        PRIORITY_RIDE_EXPIERENCE -> "প্রাথমিকতা রাইড অভিজ্ঞতা"
