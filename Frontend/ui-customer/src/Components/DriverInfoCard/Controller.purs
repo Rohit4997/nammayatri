@@ -37,6 +37,7 @@ data Action = NoAction
             | OnNavigateToZone
             | ToggleBottomSheet
             | CollapseBottomSheet
+            | EditingPickupLocation
             | ShareRide
             | RideSupport
             | StartLocationTracking String

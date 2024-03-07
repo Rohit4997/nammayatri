@@ -731,7 +731,7 @@ driverLocationTracking push action duration id routeState = do
 
       destSpecialTagIcon = HSConfig.specialLocationIcons state.data.zoneType.destinationTag
 
-      specialLocationTag = HSConfig.specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig
+      specialLocationTag = HSConfig.specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig false false
     routeResponse <- getRoute routeState $ makeGetRouteReq srcLat srcLon dstLat dstLon
     case routeResponse of
       Right (GetRouteResp routeResp) -> do
@@ -791,7 +791,7 @@ driverLocationTracking push action duration id routeState = do
 
       destSpecialTagIcon = HSConfig.specialLocationIcons state.data.zoneType.destinationTag
 
-      specialLocationTag = HSConfig.specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig
+      specialLocationTag = HSConfig.specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig false false
     locationResp <- liftFlow $ isCoordOnPath (walkCoordinates route.points) (resp ^. _lat) (resp ^. _lon) (state.data.speed)
     if locationResp.isInPath then do
       let
@@ -894,7 +894,7 @@ updateMockData push state id = defaultMockInviteFlow id state
       srcLon = srcPoint.lng
       dstLat = ride.destinationLat
       dstLon = ride.destinationLng
-    void $ runExceptT $ runBackT $ drawMapRoute srcLat srcLon dstLat dstLon (normalRoute "") "NORMAL" (getString if showRipples then SOS_LOCATION else PICKUP) (getString DROP) route "trip" $ (HSConfig.specialLocationConfig "" "" false getPolylineAnimationConfig) { autoZoom = false }
+    void $ runExceptT $ runBackT $ drawMapRoute srcLat srcLon dstLat dstLon (normalRoute "") "NORMAL" (getString if showRipples then SOS_LOCATION else PICKUP) (getString DROP) route "trip" $ (HSConfig.specialLocationConfig "" "" false getPolylineAnimationConfig false false) { autoZoom = false }
     when showRipples $ do
       liftFlow $ addAndUpdateSOSRipples srcPoint
     liftFlow $ animateCamera srcLat srcLon 17.0 "ZOOM"

@@ -77,7 +77,7 @@ import MerchantConfig.Types (AppConfig(..))
 import MerchantConfig.Utils (getMerchant, Merchant(..))
 import PaymentPage (checkPPInitiateStatus, consumeBP, initiatePP, paymentPageUI, PayPayload(..), PaymentPagePayload(..), getAvailableUpiApps, getPaymentPageLangKey, initiatePaymentPage)
 import Prelude (Unit, bind, discard, pure, unit, unless, negate, void, when, map, otherwise, ($), (==), (/=), (&&), (||), (/), when, (+), show, (>), not, (<), (*), (-), (<=), (<$>), (>=), ($>), (<<<), const)
-import Presto.Core.Types.Language.Flow (delay, setLogField, getLogFields, doAff, fork, Flow)
+import Presto.Core.Types.Language.Flow (delay, setLogField, getLogFields, doAff, fork, setState, Flow)
 import PrestoDOM (initUI)
 import Resource.Constants (decodeAddress)
 import Resource.Constants as RC
@@ -2104,6 +2104,9 @@ homeScreenFlow = do
         "RIDE_REQUESTED"    -> do
           void $ updateStage $ HomeScreenStage RideRequested
           homeScreenFlow
+        "EDIT_LOCATION" -> do
+          _ <- lift $ lift $ setState defaultGlobalState
+          baseAppFlow true Nothing
         _                   -> homeScreenFlow
     REFRESH_HOME_SCREEN_FLOW -> do
       void $ pure $ removeAllPolylines ""
@@ -2141,7 +2144,7 @@ homeScreenFlow = do
         let coors = (walkCoordinate srcLon srcLat destLon destLat)
         modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen { props { routeVisible = true } })
         void $ pure $ removeAllPolylines ""
-        liftFlowBT $ drawRoute coors "DOT" "#323643" false "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig) 
+        liftFlowBT $ drawRoute coors "DOT" "#323643" false "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig false false) 
         homeScreenFlow
         else if not null state.data.route then do
           let shortRoute = (state.data.route !! 0)
@@ -2151,7 +2154,7 @@ homeScreenFlow = do
               modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen { props { routeVisible = true } })
               pure $ removeMarker "ic_vehicle_side"
               void $ pure $ removeAllPolylines ""
-              liftFlowBT $ drawRoute coor "LineString" "#323643" true "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig) 
+              liftFlowBT $ drawRoute coor "LineString" "#323643" true "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig false false) 
               pure unit
             Nothing -> pure unit
           homeScreenFlow
@@ -2164,7 +2167,7 @@ homeScreenFlow = do
                 modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen { data { activeRide { actualRideDistance = if state.props.currentStage == RideStarted then (toNumber route.distance) else state.data.activeRide.actualRideDistance , duration = route.duration } , route = routeApiResponse}, props { routeVisible = true } })
                 pure $ removeMarker "ny_ic_auto"
                 void $ pure $ removeAllPolylines ""
-                liftFlowBT $ drawRoute coor "ic_vehicle_side" "#323643" true "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig) 
+                liftFlowBT $ drawRoute coor "ic_vehicle_side" "#323643" true "ny_ic_src_marker" "ny_ic_dest_marker" 9 "NORMAL" source destination (mapRouteConfig "" "" false getPolylineAnimationConfig false false) 
                 pure unit
               Nothing -> pure unit
             homeScreenFlow

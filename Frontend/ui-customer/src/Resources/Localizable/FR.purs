@@ -1025,3 +1025,5 @@ getFR stringKey =
         MESSAGE_FROM name -> "Message de " <> name
         RIDE_CANCELLED -> "Trajet annulé"
         TRACK_RIDE_STRING appName driverName trackLink vehicleNumber -> "👋 Salut,\n\nJe suis en train de rouler avec le chauffeur " <> driverName <> " de " <> appName <> "! Suivez ce trajet sur : " <> trackLink <> "\n\nNuméro de véhicule : " <> vehicleNumber
+        DRIVER_ALMOST_AT_PICKUP -> "le chauffeur est presque au moment de la prise en charge, veuillez le contacter pour modifier la prise en charge"
+        MAXIMUM_EDIT_PICKUP_ATTEMPTS_REACHED -> "Vous avez atteint le nombre maximum de tentatives pour modifier le lieu de retrait"

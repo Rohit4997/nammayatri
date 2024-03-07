@@ -329,7 +329,9 @@ primaryButtonConfirmPickupConfig state =
         , margin = (MarginTop 8)
         , id = "ConfirmLocationButton"
         , background = state.data.config.primaryBackground
-        , enableRipple = true
+        , isClickable = (state.props.currentStage == EditPickUpLocation && DS.null state.props.markerLabel ) || state.props.currentStage == ConfirmingLocation
+        , alpha = if (state.props.currentStage == EditPickUpLocation && DS.null state.props.markerLabel ) || state.props.currentStage == ConfirmingLocation then 1.0 else 0.5
+        , enableRipple = (state.props.currentStage == EditPickUpLocation && DS.null state.props.markerLabel ) || state.props.currentStage == ConfirmingLocation
         , rippleColor = Color.rippleShade
         }
   in
@@ -1456,14 +1458,16 @@ specialLocationIcons tag =
 
 
 
-specialLocationConfig :: String -> String -> Boolean -> PolylineAnimationConfig -> JB.MapRouteConfig
-specialLocationConfig srcIcon destIcon isAnim animConfig = {
+specialLocationConfig :: String -> String -> Boolean -> PolylineAnimationConfig -> Boolean -> Boolean -> JB.MapRouteConfig
+specialLocationConfig srcIcon destIcon isAnim animConfig isSrcEditable isDestEditable = {
     sourceSpecialTagIcon : srcIcon
   , destSpecialTagIcon : destIcon
   , vehicleSizeTagIcon : (HU.getVehicleSize unit)
   , isAnimation : isAnim
   , autoZoom : true
   , polylineAnimationConfig : animConfig
+  , pickUpLocationEditable : isSrcEditable
+  , dropLocationEditable : isDestEditable
 }
 
 updateRouteMarkerConfig :: JB.Locations -> String -> String -> String -> String -> JB.MapRouteConfig -> JB.UpdateRouteMarker

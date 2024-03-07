@@ -1021,3 +1021,5 @@ getEN stringKey =
         MESSAGE_FROM name -> "Message from " <> name
         RIDE_CANCELLED -> "Ride Cancelled"
         TRACK_RIDE_STRING appName driverName trackLink vehicleNumber -> "👋 Hey,\n\nI am riding with " <> appName <>" Driver " <> driverName <> "! Track this ride on: " <> trackLink <> "\n\nVehicle number: " <> vehicleNumber
+        DRIVER_ALMOST_AT_PICKUP -> "Driver is almost at pickup, please contact them to change pickup"
+        MAXIMUM_EDIT_PICKUP_ATTEMPTS_REACHED -> "You have reached the maximum number of attempts to change the pickup location"

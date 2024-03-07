@@ -11,7 +11,7 @@ try {
 const bundleLoadTime = Date.now();
 window.flowTimeStampObject = {};
 const blackListFunctions = ["getFromSharedPrefs", "getKeysInSharedPref", "setInSharedPrefs", "addToLogList", "requestPendingLogs", "sessioniseLogs", "setKeysInSharedPrefs", "getLayoutBounds"]
-window.whitelistedNotification = ["DRIVER_ASSIGNMENT", "CANCELLED_PRODUCT", "DRIVER_REACHED", "REALLOCATE_PRODUCT"];
+window.whitelistedNotification = ["DRIVER_ASSIGNMENT", "CANCELLED_PRODUCT", "DRIVER_REACHED", "REALLOCATE_PRODUCT", "EDIT_LOCATION"];
 
 if (window.JBridge.firebaseLogEventWithParams){  
   Object.getOwnPropertyNames(window.JBridge).filter((fnName) => {

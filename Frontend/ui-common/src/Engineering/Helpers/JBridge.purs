@@ -208,7 +208,7 @@ foreign import storeCallBackBatteryUsagePermission :: forall action. (action -> 
 foreign import storeCallBackNotificationPermission :: forall action. (action -> Effect Unit) -> (Boolean -> action) -> Effect Unit
 foreign import isInternetAvailable :: Unit -> Effect Boolean
 foreign import storeCallBackInternetAction :: forall action. (action -> Effect Unit) -> (String -> action) -> Effect Unit
-
+foreign import storeCallBackEditLocation :: forall action. EffectFn2 (action -> Effect Unit) (String -> action) Unit
 foreign import openWhatsAppSupport :: String -> Effect Unit
 foreign import generateSessionToken :: String -> String
 foreign import addMediaFile :: EffectFn7 String String String String String String Boolean Unit
@@ -447,6 +447,8 @@ type LocateOnMapConfig = {
   , points :: (Array Location)
   , zoomLevel :: Number
   , labelId :: String
+  , editPickUpThreshold :: Number
+  , editPickupLocation :: Boolean
 }
 
 locateOnMapConfig :: LocateOnMapConfig
@@ -458,6 +460,8 @@ locateOnMapConfig = {
   , points : []
   , zoomLevel : if (os == "IOS") then 19.0 else 17.0
   , labelId : ""
+  , editPickUpThreshold : 100.0
+  , editPickupLocation : false
 }
 
 
@@ -468,6 +472,8 @@ type MapRouteConfig = {
   , isAnimation :: Boolean
   , polylineAnimationConfig :: PolylineAnimationConfig
   , autoZoom :: Boolean
+  , pickUpLocationEditable :: Boolean
+  , dropLocationEditable :: Boolean
 }
 
 type Coordinates = Array Paths
@@ -516,6 +522,7 @@ type UpdateRouteConfig = {
   , specialLocation :: MapRouteConfig
   , zoomLevel :: Number
   , autoZoom :: Boolean
+  , locationName :: String
 }
 
 updateRouteConfig :: UpdateRouteConfig
@@ -535,8 +542,11 @@ updateRouteConfig = {
         draw: 0, 
         fade: 0, 
         delay: 0
-      } 
+      } ,
+      pickUpLocationEditable : true,
+      dropLocationEditable : true
   }
+  , locationName : ""
   , zoomLevel : if (os == "IOS") then 19.0 else 17.0
   , autoZoom : true
 }
@@ -595,4 +605,5 @@ showDatePicker push action= do
   timePicker <- makeAff \cb -> timePickerWithoutTimeout (cb <<< Right) TimePicker $> nonCanceler
   let (TimePicker timeResp hour minute) = timePicker
   liftEffect $ push $ action dateResp year month day timeResp hour minute
+  
   

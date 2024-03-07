@@ -1232,7 +1232,7 @@ getDriverDetails state = {
   , enablePaddingBottom : false
 }
 
-getTripDetails :: DriverInfoCardState -> TripDetails Action
+getTripDetails :: DriverInfoCardState -> TripDetails Action 
 getTripDetails state = {
   rideStarted : state.props.currentStage == RideStarted
   , source : state.data.source
@@ -1240,4 +1240,7 @@ getTripDetails state = {
   , onAnimationEnd : NoAction
   , backgroundColor : Color.white900
   , enablePaddingBottom : true
+  , rideAccepted : state.props.currentStage == RideAccepted
+  , editingPickupLocation : EditingPickupLocation
+  , isEditPickupEnabled : state.data.config.feature.enableEditPickupLocation
 }

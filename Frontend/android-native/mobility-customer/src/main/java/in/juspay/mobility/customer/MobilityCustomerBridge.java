@@ -43,6 +43,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.ButtCap;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.Dash;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -205,7 +207,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
     @JavascriptInterface
     public void updateRoute(String _payload) {
         ExecutorManager.runOnMainThread(() -> {
-            if (googleMap != null) {
+            if (googleMap != null && !EDIT_LOCATION) {
                 try {
                     MapRemoteConfig mapRemoteConfig = getMapRemoteConfig();
                     float zoomLevel;
@@ -218,6 +220,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     String json = payload.optString("json", "");
                     String dest = payload.optString("destMarker", "");
                     String eta = payload.optString("eta", "");
+                    String locationName = payload.optString("locationName" , "");
                     String src = payload.optString("srcMarker", "");
                     String specialLocation = payload.optString("specialLocation", "");
                     boolean autoZoom = payload.optBoolean("autoZoom", true);
@@ -236,14 +239,15 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     Marker destMarker = (Marker) markers.get(dest);
                     JSONObject specialLocationObject = new JSONObject(specialLocation);
                     String destinationSpecialTagIcon = specialLocationObject.getString("destSpecialTagIcon");
-
-                    destMarker.setIcon((BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(eta, dest, false,null, destinationSpecialTagIcon.equals("") ? null : destinationSpecialTagIcon, MarkerType.NORMAL_MARKER))));
+                    Boolean isDropLocationEditable = specialLocationObject.getBoolean("dropLocationEditable");
+                    if(!locationName.equals(""))
+                        destMarker.setIcon((BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(locationName, dest, false,null, destinationSpecialTagIcon.equals("") ? null : destinationSpecialTagIcon, MarkerType.NORMAL_MARKER, isDropLocationEditable,0))));
                     destMarker.setTitle("Driver is " + eta);
                     if (polyline != null) {
                         polyline.setEndCap(new ButtCap());
                         if (path.size() == 0) {
                             LatLng destination = destMarker.getPosition();
-                            animateMarkerNew(src, destination, currMarker);
+                            animateMarkerNew(src, destination, currMarker, eta );
                             if(overlayPolylines != null) {
                                 overlayPolylines.remove();
                                 overlayPolylines = null;
@@ -255,7 +259,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                             polyline.remove();
                             polyline = null;
 
-                            currMarker.setAnchor(0.5f, 0);
+                            currMarker.setAnchor(0.4f, 0.8f);
                             mapUpdate.isMapMoved = false;
                             mapUpdate.isMapIdle = true;
                             animateCamera(destMarker.getPosition().latitude, destMarker.getPosition().longitude, zoomLevel, ZoomType.ZOOM);
@@ -265,7 +269,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                             double sourceLat = path.get(path.size() - 1).latitude;
                             double sourceLong = path.get(path.size() - 1).longitude;
                             LatLng destination = path.get(path.size() - 1);
-                            animateMarkerNew(src, destination, currMarker);
+                            animateMarkerNew(src, destination, currMarker, eta);
                             PatternItem DASH = new Dash(1);
                             List<PatternItem> PATTERN_POLYLINE_DOTTED_DASHED = Collections.singletonList(DASH);
                             polyline.setPattern(PATTERN_POLYLINE_DOTTED_DASHED);
@@ -288,12 +292,9 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
         });
     }
 
-    private void animateMarkerNew(String src, LatLng destination, final Marker marker) {
+    private void animateMarkerNew(String src, LatLng destination, final Marker marker, String infoLabelText) {
         if (marker != null) {
-
             LatLng startPosition = marker.getPosition();
-
-
             ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
             valueAnimator.setDuration(2000); // TODO :: get this value from Loacl Storage to maintain sync with PS
             valueAnimator.setInterpolator(new LinearInterpolator());
@@ -302,8 +303,9 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     float v = animation.getAnimatedFraction();
                     LatLng newPosition = SphericalUtil.interpolate(startPosition, destination, v);
                     float rotation = bearingBetweenLocations(startPosition, destination);
-                    if (rotation > 1.0)
-                        marker.setRotation(rotation);
+                    if (rotation > 1.0){
+                        marker.setIcon((BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(infoLabelText, src, false, null, null, MarkerType.NORMAL_MARKER, false,rotation))));
+                    }
                     marker.setPosition(newPosition);
                     markers.put(src, marker);
                 } catch (Exception e) {
@@ -363,7 +365,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                         .title("")
                         .position(new LatLng(lat, lng))
                         .anchor(0.5f, 0.5f)
-                        .icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", icon, false,null,null, MarkerType.SPECIAL_ZONE_MARKER)));
+                        .icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", icon, false,null,null, MarkerType.SPECIAL_ZONE_MARKER, false,0)));
                 Marker m = googleMap.addMarker(markerOptionsObj);
                 if (m != null) {
                     m.hideInfoWindow();
@@ -394,7 +396,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                         if (userPositionMarker == null) {
                             upsertMarker(CURRENT_LOCATION, String.valueOf(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LAT")), String.valueOf(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LON")), 160, 0.5f, 0.9f); //TODO this function will be removed
                         } else {
-                            userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(locationName, CURRENT_LOCATION, false,null,null, MarkerType.NORMAL_MARKER)));
+                            userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(locationName, CURRENT_LOCATION, false,null,null, MarkerType.NORMAL_MARKER, false,0)));
                             userPositionMarker.setTitle("");
                             LatLng latLng = new LatLng(Double.parseDouble(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LAT")), Double.parseDouble(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LON")));
                         }
@@ -416,7 +418,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     layer.removeLayerFromMap();
                 }
                 if (userPositionMarker != null) {
-                    userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", CURRENT_LOCATION, false,null,null, MarkerType.NORMAL_MARKER)));
+                    userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", CURRENT_LOCATION, false,null,null, MarkerType.NORMAL_MARKER, false, 0)));
                     userPositionMarker.setTitle("");
                 }
             } catch (Exception e) {
@@ -439,6 +441,8 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
               String geoJson = payload.optString("geoJson", "");
               String points = payload.optString("points", "[]");
               float zoomLevel = (float) payload.optDouble("zoomLevel", 17.0);
+              float editPickupThreshold = (float) payload.optDouble("editPickUpThreshold", 100.0);
+              EDIT_LOCATION = payload.optBoolean("editPickupLocation", false);
               final TextView labelView = payload.optString("labelId", "").equals("") ? null : Objects.requireNonNull(bridgeComponents.getActivity()).findViewById(Integer.parseInt(payload.getString("labelId")));
               final JSONObject hotSpotConfig = locateOnMapConfig != null ? locateOnMapConfig.optJSONObject("hotSpotConfig") : null;
               final boolean enableHotSpot = hotSpotConfig != null && hotSpotConfig.optBoolean("enableHotSpot", false);
@@ -491,6 +495,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                         double lat1 = (googleMap.getCameraPosition().target.latitude);
                         double lng = (googleMap.getCameraPosition().target.longitude);
                         ExecutorService executor = Executors.newSingleThreadExecutor();
+
                         Handler handler = new Handler(Looper.getMainLooper());
                         executor.execute(() -> {
                             try {
