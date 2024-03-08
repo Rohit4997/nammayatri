@@ -24,6 +24,7 @@ import Data.Maybe (Maybe(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Error, makeAff, nonCanceler)
 import Engineering.Helpers.BackTrack (getState, liftFlowBT)
+import Engineering.Helpers.Commons (markPerformance)
 import Helpers.Utils (getCurrentLocation, LatLon(..))
 import Helpers.Utils (getDistanceBwCordinates, LatLon(..), getCurrentLocation)
 import JBridge (getCurrentPosition, getCurrentPositionWithTimeout)
@@ -41,10 +42,11 @@ import Types.ModifyScreenState (modifyScreenState)
 import Debug
 
 homeScreen :: FlowBT String HOME_SCREENOUTPUT
-homeScreen = do  
+homeScreen = do
   liftFlowBT $ Events.endMeasuringDuration "Flow.initialFlow"
   logField_ <- lift $ lift $ getLogFields
   (GlobalState state) <- getState
+  liftFlowBT $ markPerformance "HOME_SCREEN"
   action <- lift $ lift $ runScreen $ HomeScreen.screen state.homeScreen{data{logField = logField_}}
   case action of
     GoToVehicleDetailScreen updatedState -> do 
@@ -143,3 +145,6 @@ homeScreen = do
     EarningsScreen updatedState showCoinsView -> do 
       modifyScreenState $ HomeScreenStateType (\_ -> updatedState)
       App.BackT $ App.BackPoint <$> (pure $ HOMESCREEN_NAV $ GoToEarningsScreen showCoinsView)
+    DriverStatsUpdate updatedState driverStats -> do 
+      modifyScreenState $ HomeScreenStateType (\_ -> updatedState)
+      App.BackT $ App.NoBack <$> (pure $ GOT_DRIVER_STATS driverStats)

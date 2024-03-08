@@ -1360,24 +1360,38 @@ export const _onEventWithCB = function (payload) {
   };
 };
 
+const aggregate = function (key) {
+  try {
+    window.aggregate = window.aggregate || {};
+    window.aggregate[key] = window.aggregate[key] || 0;
+    window.aggregate[key] += 1;
+  } catch (err) {
+    console.log("Catch aggregate : ", err);
+  }
+}
+
 // exports.getSessionInfo = JSON.parse(JBridge.getDeviceInfo());
 
 export const getKeyInNativeSharedPrefKeys = function (key) {
+  aggregate(key);
   return JBridge.getFromSharedPrefs(key);
 };
 
 export const setKeyInSharedPrefKeysImpl = function (key) {
   return function (value) {
+    aggregate(key);
     return JBridge.setInSharedPrefs(key, value);
   };
 };
 
 export const setKeyInSharedPref = function (key, value) {
+  aggregate(key);
   return JBridge.setInSharedPrefs(key, value);
 };
 
 export const setEnvInNativeSharedPrefKeysImpl = function (key) {
   return function (value) {
+    aggregate(key);
     return JBridge.setInSharedPrefs(key, value);
   };
 };
@@ -1389,10 +1403,12 @@ export const setEnvInNativeSharedPrefKeysImpl = function (key) {
 // };
 
 export const removeKeysInSharedPrefs = function (key) {
+  aggregate(key);
   return JBridge.removeDataFromSharedPrefs(key);
 };
 
 export const removeKeysInNativeSharedPrefs = function (key) {
+  aggregate(key);
   return JBridge.removeDataFromSharedPrefs(key);
 };
 

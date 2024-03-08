@@ -45,6 +45,10 @@ export const endMeasuringDuration = function (key) {
 export const getEvents = function () {
   try {
     if (typeof window === "object") {
+      if (window.aggregate && !window.aggregate.pushOnce) {
+        window.aggregate.pushOnce = true;
+        window.events.aggregate = window.aggregate;
+      }
       const events = Object.assign({}, window.events, {
         appVersion: window.version["app"],
         configVersion: window.version["configuration"],
@@ -75,7 +79,7 @@ export const addEventData = function (key) {
           typeof value !== "undefined" &&
           value !== ""
         ) {
-          window.events[key] = { value, timestamp : new Date() };          
+          window.events[key] = { value, timestamp: new Date() };
         }
       } catch (error) {
         console.log("Add event data catch block" + error);
