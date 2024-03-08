@@ -1273,3 +1273,6 @@ getML stringKey =
         EXIT_THE_QUIZ -> "ക്വിസിൽ നിന്ന് പുറത്തുകടക്കണോ?"
         EXIT_AND_START_AGAIN_LATER -> "പുറത്തുകടക്കുക, പിന്നീട് വീണ്ടും ആരംഭിക്കുക"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "നിങ്ങൾക്ക് വായിക്കാൻ കഴിയുന്ന ഭാഷ തിരഞ്ഞെടുക്കുക"
+        ADD_VEHICLE -> "വാഹനം ചേർക്കുക"
+        SELECT_YOUR_VEHICLE_TYPE -> "നിങ്ങളുടെ വാഹന തരം തിരഞ്ഞെടുക്കുക"
+        CAR -> "കാർ"

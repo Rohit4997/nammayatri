@@ -1273,3 +1273,6 @@ getKN stringKey =
         EXIT_THE_QUIZ -> "ರಸಪ್ರಶ್ನೆಯಿಂದ ನಿರ್ಗಮಿಸುವುದೇ?"
         EXIT_AND_START_AGAIN_LATER -> "ನಿರ್ಗಮಿಸಿ ಮತ್ತು ನಂತರ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "ನೀವು ಓದಬಹುದಾದ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        ADD_VEHICLE -> "ವಾಹನ ಸೇರಿಸಿ"
+        SELECT_YOUR_VEHICLE_TYPE -> "ನಿಮ್ಮ ವಾಹನದ ರೀತಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        CAR -> "ಕಾರು"

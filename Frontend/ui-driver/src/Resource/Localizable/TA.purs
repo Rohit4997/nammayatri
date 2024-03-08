@@ -1273,3 +1273,6 @@ getTA stringKey =
         EXIT_THE_QUIZ -> "வினாடி வினாவிலிருந்து வெளியேறவா?"
         EXIT_AND_START_AGAIN_LATER -> "வெளியேறி பின்னர் மீண்டும் தொடங்கவும்"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "நீங்கள் படிக்கக்கூடிய மொழியைத் தேர்ந்தெடுக்கவும்"
+        ADD_VEHICLE -> "வாகனத்தைச் சேர்க்கவும்"
+        SELECT_YOUR_VEHICLE_TYPE -> "உங்கள் வாகன வகையை தேர்ந்தெடுக்கவும்"
+        CAR -> "கார்"

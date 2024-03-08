@@ -128,6 +128,7 @@ data KeyStore = USER_NAME
                 | REFERRER_URL
                 | LMS_SELECTED_LANGUAGE_CACHE
                 | ANOTHER_ACTIVITY_LAUNCHED
+                | VEHICLE_CATEGORY
 
 derive instance genericKeyStore :: Generic KeyStore _
 instance showKeyStore :: Show KeyStore where

@@ -1273,3 +1273,6 @@ getHI stringKey =
         EXIT_THE_QUIZ -> "प्रश्नोत्तरी से बाहर निकलें?"
         EXIT_AND_START_AGAIN_LATER -> "बाहर निकलें और बाद में पुनः प्रारंभ करें"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "वह भाषा चुनें जिसे आप पढ़ सकते हैं"
+        ADD_VEHICLE -> "वाहन जोड़ें"
+        SELECT_YOUR_VEHICLE_TYPE -> "अपने वाहन का प्रकार चुनें"
+        CAR -> "कार"
