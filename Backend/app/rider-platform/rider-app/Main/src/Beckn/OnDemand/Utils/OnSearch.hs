@@ -218,15 +218,28 @@ buildWaitingChargeInfo item = do
         { waitingChargePerMin = waitingChargePerMin'
         }
 
-getProviderLocation :: MonadFlow m => Spec.Provider -> m [Maps.LatLong]
-getProviderLocation provider = do
+getProviderLocation :: MonadFlow m => Spec.Provider -> [Spec.Fulfillment] -> VehicleVariant.VehicleVariant -> m [Maps.LatLong]
+getProviderLocation provider _fullfillments _vehicleVariant = do
   locations <- provider.providerLocations & fromMaybeM (InvalidRequest "Missing Locations")
-  mapM makeLatLong locations
+  latLongs <- sequence $ map (makeLatLong _fullfillments provider _vehicleVariant) locations
+  return $ catMaybes latLongs
 
-makeLatLong :: MonadFlow m => Spec.Location -> m Maps.LatLong
-makeLatLong location = do
+makeLatLong :: MonadFlow m => [Spec.Fulfillment] -> Spec.Provider -> VehicleVariant.VehicleVariant -> Spec.Location -> m (Maybe Maps.LatLong)
+makeLatLong _fullfillments provider _vehicleVariant location = do
   gps <- location.locationGps & fromMaybeM (InvalidRequest "Missing GPS")
-  Common.parseLatLong gps
+  locationId <- location.locationId & fromMaybeM (InvalidRequest "Missing Location Id")
+  providerItems <- provider.providerItems & fromMaybeM (InvalidRequest "Missing Items")
+  let providerItem =
+        filter
+          ( \f -> case f.itemLocationIds of
+              Just items -> locationId `elem` items
+              _ -> False
+          )
+          providerItems
+  vehicleVariant <- maybe (pure Nothing) (fmap Just . getVehicleVariant provider) (listToMaybe providerItem)
+  if vehicleVariant == Just _vehicleVariant
+    then Just <$> Common.parseLatLong gps
+    else pure Nothing
 
 buildSpecialLocationTag :: MonadFlow m => Spec.Item -> m (Maybe Text)
 buildSpecialLocationTag item =
