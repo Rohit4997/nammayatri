@@ -1354,7 +1354,7 @@ homeScreenFlow = do
             addNewAddressScreen
               { props
                 { showSavePlaceView = false
-                , fromHome = true
+                , fromHome = state.props.currentStage == HomeScreen
                 , fromScreen = Screen.getScreen Screen.HOME_SCREEN
                 , editLocation = false
                 , editSavedLocation = false
@@ -2219,7 +2219,8 @@ addNewAddressScreenFlow input = do
                                                           , savedLocations = (AddNewAddress.getSavedLocations savedLocationResp.list)
                                                           }
                                                         } )
-
+        when (not state.props.fromHome) $ do
+          void $ lift $ lift $ liftFlow $ reallocateMapFragment (getNewIDWithTag "CustomerHomeScreen")
         homeScreenFlow
       else savedLocationFlow
 
