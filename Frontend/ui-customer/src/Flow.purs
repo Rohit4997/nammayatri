@@ -584,7 +584,7 @@ homeScreenFlow = do
         modifyScreenState $ MyProfileScreenStateType (\myProfileScreenState ->  MyProfileScreenData.initData{props{fromHomeScreen = updateProfile , updateProfile = updateProfile, changeAccessibility = true, isBtnEnabled = true , genderOptionExpanded = false , showOptions = false, expandEnabled = true }})
         myProfileScreenFlow
     GO_TO_FIND_ESTIMATES updatedState -> do
-      if updatedState.data.source == getString STR.CURRENT_LOCATION then do
+      if DS.null updatedState.data.source then do
         PlaceName address <- getPlaceName updatedState.props.sourceLat updatedState.props.sourceLong HomeScreenData.dummyLocation
         modifyScreenState $ HomeScreenStateType (\homeScreen -> updatedState{ data{ source = address.formattedAddress, sourceAddress = encodeAddress address.formattedAddress [] Nothing updatedState.props.sourceLat updatedState.props.sourceLong } })
       else
@@ -1148,7 +1148,7 @@ homeScreenFlow = do
             { locateOnMapLocation
               { sourceLat = sourceLat
               , sourceLng = sourceLong
-              , source = getString STR.CURRENT_LOCATION
+              , source = ""
               }
             , sourceLat = sourceLat
             , sourceLong = sourceLong
@@ -1359,7 +1359,7 @@ homeScreenFlow = do
             addNewAddressScreen
               { props
                 { showSavePlaceView = false
-                , fromHome = true
+                , fromHome = state.props.currentStage == HomeScreen
                 , fromScreen = Screen.getScreen Screen.HOME_SCREEN
                 , editLocation = false
                 , editSavedLocation = false
@@ -1684,7 +1684,7 @@ rideSearchFlow flowType = do
   logField_ <- lift $ lift $ getLogFields
   (GlobalState homeScreenModifiedState) <- getState
   let finalState = homeScreenModifiedState.homeScreen -- bothLocationChangedState{props{isSrcServiceable =homeScreenModifiedState.homeScreen.props.isSrcServiceable, isDestServiceable = homeScreenModifiedState.homeScreen.props.isDestServiceable, isRideServiceable = homeScreenModifiedState.homeScreen.props.isRideServiceable }}
-  if (finalState.props.sourceLat /= 0.0 && finalState.props.sourceLong /= 0.0) && (finalState.props.destinationLat /= 0.0 && finalState.props.destinationLong /= 0.0) && (finalState.data.source /= "") && (finalState.data.destination /= "")
+  if (finalState.props.sourceLat /= 0.0 && finalState.props.sourceLong /= 0.0) && (finalState.props.destinationLat /= 0.0 && finalState.props.destinationLong /= 0.0) && (finalState.data.destination /= "")
     then do
       modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen{props{flowWithoutOffers = flowWithoutOffers WithoutOffers}})
       case finalState.props.sourceSelectedOnMap of
@@ -2220,7 +2220,8 @@ addNewAddressScreenFlow input = do
                                                           , savedLocations = (AddNewAddress.getSavedLocations savedLocationResp.list)
                                                           }
                                                         } )
-
+        when (not state.props.fromHome) $ do
+          void $ lift $ lift $ liftFlow $ reallocateMapFragment (getNewIDWithTag "CustomerHomeScreen")
         homeScreenFlow
       else savedLocationFlow
 

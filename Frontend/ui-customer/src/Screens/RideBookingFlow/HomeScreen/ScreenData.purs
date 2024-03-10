@@ -307,6 +307,8 @@ initData = {
           , sourceManuallyMoved : false
           , destManuallyMoved : false
           , autoCompleteType : Nothing
+          , prevSearchedSource : ""
+          , prevSearchedDestination : ""
         }
   , suggestedRideFlow : false
   }

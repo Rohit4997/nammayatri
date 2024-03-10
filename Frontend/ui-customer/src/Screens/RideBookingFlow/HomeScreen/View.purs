@@ -2881,7 +2881,8 @@ zoneTimerExpiredView state push =
 
 currentLocationView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
 currentLocationView push state =
-  linearLayout
+  let address = if DS.null state.data.source then getString CURRENT_LOCATION else state.data.source
+  in  linearLayout
             [ width MATCH_PARENT
             , height WRAP_CONTENT
             , orientation HORIZONTAL
@@ -2892,7 +2893,7 @@ currentLocationView push state =
             , gravity CENTER_VERTICAL
             , accessibility DISABLE
             , cornerRadius 5.0
-            , visibility if state.props.defaultPickUpPoint /= "" then GONE else VISIBLE
+            , visibility if DS.null state.props.defaultPickUpPoint then VISIBLE else GONE
             ]
             [ imageView
                 [ imageWithFallback $ fetchImage FF_COMMON_ASSET "ny_ic_source_dot"
@@ -2903,7 +2904,7 @@ currentLocationView push state =
                 ]
             , textView
                 $
-                  [ text state.data.source
+                  [ text address
                   , ellipsize true
                   , singleLine true
                   , accessibility ENABLE
