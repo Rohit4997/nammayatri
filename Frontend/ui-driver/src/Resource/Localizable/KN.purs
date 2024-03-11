@@ -1273,3 +1273,6 @@ getKN stringKey =
         EXIT_THE_QUIZ -> "ರಸಪ್ರಶ್ನೆಯಿಂದ ನಿರ್ಗಮಿಸುವುದೇ?"
         EXIT_AND_START_AGAIN_LATER -> "ನಿರ್ಗಮಿಸಿ ಮತ್ತು ನಂತರ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "ನೀವು ಓದಬಹುದಾದ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+        TO_GET_YOU_RIDES -> "ನಿಮ್ಮ ಸವಾರಿಗಳನ್ನು ಪಡೆಯಲು, ನಮಗೆ ನಿಮ್ಮ ಸಾಧನದ ಸ್ಥಳದ ಅಗತ್ಯವಿದೆ."
+        ALLOW -> "ಅನುಮತಿಸು"
+        PERMISSIONS_REQUIRED -> "ಅನುಮತಿಗಳ ಅಗತ್ಯವಿದೆ"

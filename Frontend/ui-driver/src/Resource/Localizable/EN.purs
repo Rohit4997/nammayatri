@@ -1273,3 +1273,6 @@ getEN stringKey =
         EXIT_THE_QUIZ -> "Exit the Quiz ?"
         EXIT_AND_START_AGAIN_LATER -> "Exit & start again later"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "Select the language you can read"
+        TO_GET_YOU_RIDES -> "To get you rides, we require your device location."
+        ALLOW -> "Allow"
+        PERMISSIONS_REQUIRED -> "Permissions Required"

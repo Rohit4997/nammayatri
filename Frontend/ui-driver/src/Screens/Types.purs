@@ -1089,7 +1089,10 @@ type HomeScreenProps =  {
   isStatsModelExpanded :: Boolean,
   tobeLogged :: Boolean,
   safetyAudioAutoPlay :: Boolean,
-  vehicleNSPopup :: Boolean
+  vehicleNSPopup :: Boolean,
+  missingPermission :: Maybe Int,
+  onPermissionScreen :: Boolean,
+  enablePermissionAnim :: Boolean
  }
 
 data SubscriptionBannerType = FREE_TRIAL_BANNER | SETUP_AUTOPAY_BANNER | CLEAR_DUES_BANNER | NO_SUBSCRIPTION_BANNER | DUE_LIMIT_WARNING_BANNER | LOW_DUES_BANNER
@@ -2468,3 +2471,26 @@ type SelectedOption = {
   isCorrect :: Boolean,
   validated :: Boolean
 }
+-- ######################################### AskPermissionScreenState ####################################################
+
+type AskPermissionScreenState = {
+  data :: AskPermissionScreenData ,
+  props :: AskPermissionScreenProps
+}
+
+type AskPermissionScreenData = {
+  permissionList :: Array Permissions
+} 
+
+type AskPermissionScreenProps = {
+  backpressEnabled :: Boolean,
+  currentStep :: Maybe Permissions,
+  ifAnim :: Boolean
+} 
+
+data Permissions = Overlay | Battery | AutoStart | Notifications | LocationPermission
+derive instance genericPermissions :: Generic Permissions _
+instance eqPermissions :: Eq Permissions where eq = genericEq
+instance showPermissions :: Show Permissions where show = genericShow
+instance decodePermissions :: Decode Permissions where decode = defaultEnumDecode
+instance encodePermissions :: Encode Permissions where encode = defaultEnumEncode

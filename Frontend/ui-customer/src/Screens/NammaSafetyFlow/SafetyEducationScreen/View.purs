@@ -189,7 +189,7 @@ videoView push state =
                   ]
                 <> FontStyle.h3 TypoGraphy
             ]
-        , PrestoAnim.animationSet [ triggerOnAnimationEnd true ]
+        , PrestoAnim.animationSet [ triggerOnAnimationEnd true 250 ]
             $ linearLayout
                 [ width MATCH_PARENT
                 , height MATCH_PARENT

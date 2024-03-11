@@ -1273,3 +1273,6 @@ getTE stringKey =
         EXIT_THE_QUIZ -> "క్విజ్ నుండి నిష్క్రమించాలా?"
         EXIT_AND_START_AGAIN_LATER -> "నిష్క్రమించి, తర్వాత మళ్లీ ప్రారంభించండి"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "మీరు చదవగలిగే భాషను ఎంచుకోండి"
+        TO_GET_YOU_RIDES -> "మీ రైడ్‌లను పొందడానికి, మాకు మీ పరికరం స్థానం అవసరం."
+        ALLOW -> "అనుమతించు"
+        PERMISSIONS_REQUIRED -> "అనుమతులు అవసరం"

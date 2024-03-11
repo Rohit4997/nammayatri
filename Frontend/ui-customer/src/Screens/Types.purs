@@ -148,13 +148,6 @@ type WelcomeScreenData = {
   logField :: Object Foreign
 }
 
-type StepsHeaderModelState = {
-  activeIndex :: Int,
-  textArray :: Array String,
-  backArrowVisibility :: Boolean
-, config :: AppConfig
-}
-
 -- ############################################################# ChooseLanguageScreen ################################################################################
 
 type ChooseLanguageScreenState = {

@@ -1273,3 +1273,6 @@ getBN stringKey =
         EXIT_THE_QUIZ -> "কুইজ থেকে প্রস্থান করবেন?"
         EXIT_AND_START_AGAIN_LATER -> "প্রস্থান করুন এবং পরে আবার শুরু করুন"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "আপনি পড়তে পারেন ভাষা নির্বাচন করুন"
+        TO_GET_YOU_RIDES -> "আপনাকে রাইড করতে, আমাদের আপনার ডিভাইসের অবস্থান প্রয়োজন।"
+        ALLOW -> "অনুমতি দিন"
+        PERMISSIONS_REQUIRED -> "অনুমতি প্রয়োজন"

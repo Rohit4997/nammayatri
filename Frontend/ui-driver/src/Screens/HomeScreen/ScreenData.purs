@@ -210,7 +210,10 @@ initData = {
         isStatsModelExpanded : false,
         tobeLogged : false,
         safetyAudioAutoPlay : false,
-        vehicleNSPopup : false
+        vehicleNSPopup : false,
+        missingPermission : Nothing,
+        onPermissionScreen : false,
+        enablePermissionAnim : false
     }
 }
 

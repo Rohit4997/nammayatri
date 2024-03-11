@@ -1273,3 +1273,6 @@ getHI stringKey =
         EXIT_THE_QUIZ -> "प्रश्नोत्तरी से बाहर निकलें?"
         EXIT_AND_START_AGAIN_LATER -> "बाहर निकलें और बाद में पुनः प्रारंभ करें"
         SELECT_THE_LANGUAGE_YOU_CAN_READ -> "वह भाषा चुनें जिसे आप पढ़ सकते हैं"
+        TO_GET_YOU_RIDES -> "आपको सवारी दिलाने के लिए, हमें आपके डिवाइस स्थान की आवश्यकता है।"
+        ALLOW -> "अनुमति दें"
+        PERMISSIONS_REQUIRED -> "अनुमतियाँ आवश्यक"
